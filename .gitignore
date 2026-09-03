@@ -1,6 +1,6 @@
 .DS_Store
 .cursor/
-*.mp4
-*.mov
-!public/**/*.mp4
-!public/**/*.mov
+
+# Unused local masters (over GitHub's 100MB file limit)
+Website Content/CBC Awards*.mp4
+Website Content/Duracell Optimum*.mov
