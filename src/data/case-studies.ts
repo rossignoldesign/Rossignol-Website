@@ -195,7 +195,7 @@ export const caseStudiesData: CaseStudyCarousel[] = [
     videos: [
       {
         id: "tourisme-montreal",
-        title: "Tourismé Montreal: Stop Scrolling and Start Exploring.",
+        title: "Tourismé Montreal: Stop Scrolling and Start Discovering.",
         tagline: "PSAs can promote social change…",
         clientType: "Non-Profit Destination Marketing Organization",
         summary:
