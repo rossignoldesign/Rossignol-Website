@@ -10,10 +10,44 @@ const UPLOAD_STAGGER_MAX = 280;
 const UPLOAD_VANISH_MS = 260;
 
 const GRANT_TYPES = [
-  "Tri-Agency Grant Proposal",
-  "KMb Campaign",
-  "Educational / Documentary Series",
+  "Grant Proposal Support",
+  "End of grant cycle reporting",
+  "SSHRC Grant",
+  "CIHR Grant",
+  "NSERC Grant",
+  "Funder Reporting",
+  "KMb Planning",
+  "Impact Mapping",
+  "Logic Models",
+  "Theories of Change",
   "Strategic Consulting",
+  "Public Health Messaging",
+  "Commercialization",
+  "Fundraising",
+  "Internal Communications",
+  "Knowledge Translation",
+  "Production Support / Filming",
+  "Educational Content",
+  "Documentary",
+  "Public Service Announcement",
+  "Campaign Media",
+  "Animation",
+  "Graphics",
+  "Web",
+  "Data Visualization",
+  "Qualitative Reporting",
+  "Reach Analytics",
+  "Other",
+] as const;
+
+const PARTNER_TYPES = [
+  "Institution",
+  "Researcher",
+  "Non Profit",
+  "Innovator",
+  "Social Enterprise",
+  "Gov Agency",
+  "Creative Agency",
   "Other",
 ] as const;
 
@@ -340,12 +374,79 @@ function UploadText({ text }: { text: string }) {
 }
 
 
+function DiscoveryWord({ play, reduced, wave }: { play: boolean; reduced: boolean; wave: number }) {
+  if (reduced) return <>discovery</>;
+  return (
+    <span className="cs-ether-word">
+      {Array.from("discovery").map((char, index) => (
+        <span
+          key={`${wave}-${index}`}
+          className={`cs-ether-letter cs-ether-letter--${index % 2 === 0 ? "a" : "b"}${play ? " is-run" : ""}`}
+          style={play ? { animationDelay: `${index * 36}ms` } : undefined}
+        >
+          {char}
+        </span>
+      ))}
+    </span>
+  );
+}
+
 export function FinalConversionSection() {
+  const headingRef = useRef<HTMLHeadingElement>(null);
   const [phase, setPhase] = useState<"idle" | "uploading" | "vanishing" | "done">("idle");
   const [uploadText, setUploadText] = useState("");
+  const [etherPlay, setEtherPlay] = useState(false);
+  const [etherWave, setEtherWave] = useState(0);
+  const [reduced, setReduced] = useState(false);
 
   const isSubmitting = phase === "uploading" || phase === "vanishing";
   const isSuccess = phase === "done";
+
+  useEffect(() => {
+    const prefersReduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    setReduced(prefersReduced);
+    if (prefersReduced) return undefined;
+
+    let done = false;
+    const reveal = () => {
+      if (done) return;
+      done = true;
+      setEtherPlay(true);
+    };
+
+    if (location.hash === "#contact") {
+      reveal();
+      return undefined;
+    }
+
+    const heading = headingRef.current;
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          reveal();
+          observer.disconnect();
+        }
+      },
+      { threshold: 0.55, rootMargin: "0px 0px -8% 0px" }
+    );
+    if (heading) observer.observe(heading);
+
+    const onHash = () => {
+      if (location.hash === "#contact") reveal();
+    };
+    window.addEventListener("hashchange", onHash);
+
+    return () => {
+      observer.disconnect();
+      window.removeEventListener("hashchange", onHash);
+    };
+  }, []);
+
+  useEffect(() => {
+    if (reduced || !etherPlay) return undefined;
+    const id = window.setInterval(() => setEtherWave((wave) => wave + 1), 10000);
+    return () => window.clearInterval(id);
+  }, [reduced, etherPlay]);
 
   function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -381,17 +482,25 @@ export function FinalConversionSection() {
   return (
     <section
       id="contact"
-      className="border-t border-ink/10 bg-ink/[0.04] py-16 md:py-24"
+      className="cs-contact border-t border-ink/10 bg-ink/[0.04] py-16 md:py-24"
       aria-labelledby="conversion-heading"
     >
       <div className="mx-auto max-w-3xl px-6 text-center">
         <p className="text-[0.7rem] font-medium uppercase tracking-wide text-teal">Consultation</p>
-        <h2 id="conversion-heading" className="mt-3 text-4xl font-semibold tracking-tight md:text-5xl">
-          Schedule a free discovery call today
+        <h2
+          ref={headingRef}
+          id="conversion-heading"
+          className="cs-ether mt-3 text-4xl font-semibold tracking-tight md:text-5xl"
+          aria-label="Schedule a free discovery call"
+        >
+          <span aria-hidden="true">
+            Schedule a free <DiscoveryWord play={etherPlay} reduced={reduced} wave={etherWave} /> call
+          </span>
         </h2>
         <p className="mx-auto mt-5 max-w-xl text-base font-light leading-relaxed text-ink/80">
-          Tell us about your organization, project, and objectives. We'll provide you with a free KMb mind map to get
-          the ball rolling.
+          Tell us about your organization, project, and objectives.
+          <br />
+          We'll provide you with a free KMb mind map to get the ball rolling.
         </p>
       </div>
 
@@ -453,17 +562,20 @@ export function FinalConversionSection() {
                   />
                 </label>
                 <label className="block text-sm font-medium text-ink">
-                  Organization / Institution
-                  <input
-                    className={fieldClass}
-                    type="text"
-                    name="organization"
-                    autoComplete="organization"
-                    required
-                  />
+                  What best describes you?
+                  <select className={fieldClass} name="organization" defaultValue="" required>
+                    <option value="" disabled>
+                      Select an option
+                    </option>
+                    {PARTNER_TYPES.map((option) => (
+                      <option key={option} value={option}>
+                        {option}
+                      </option>
+                    ))}
+                  </select>
                 </label>
                 <label className="block text-sm font-medium text-ink">
-                  Project / Grant Type
+                  What can we help you with?
                   <select className={fieldClass} name="grantType" defaultValue="">
                     <option value="" disabled>
                       Select a type
@@ -529,7 +641,7 @@ export function FinalConversionSection() {
                 disabled={isSubmitting}
                 className="mt-6 w-full rounded-lg bg-terracotta px-5 py-3 text-sm font-medium tracking-wide text-canvas transition duration-300 ease-calm hover:bg-terracotta/90 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-terracotta disabled:cursor-wait disabled:opacity-70 md:w-auto"
               >
-                {isSubmitting ? "Sending…" : "Schedule a KMb Consultation"}
+                {isSubmitting ? "Sending…" : "Get Started"}
               </button>
             </motion.form>
           )}

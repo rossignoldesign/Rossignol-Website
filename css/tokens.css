@@ -24,8 +24,19 @@ html {
 }
 
 .mid-banner {
+  position: relative;
+  width: 100%;
   line-height: 0;
   overflow: hidden;
+}
+
+.mid-banner-video {
+  display: block;
+  width: 100%;
+  max-width: none;
+  height: auto;
+  object-fit: cover;
+  object-position: center;
 }
 
 .footer-mark {
@@ -101,7 +112,7 @@ body {
   scrollbar-color: color-mix(in srgb, var(--color-ink) 22%, transparent) transparent;
   align-items: center;
   padding-block: 2.5rem;
-  padding-inline: max(1.5rem, calc(50% - 13rem));
+  padding-inline: 1.5rem;
   gap: 1.75rem;
   overflow-anchor: none;
 }
@@ -501,6 +512,146 @@ body {
 
 .cs-ether-letter--b {
   animation-name: cs-ether-b;
+}
+
+.cs-work .cs-ether-letter {
+  animation: none;
+  opacity: 1;
+  color: var(--color-canvas);
+  filter: none;
+  text-shadow: none;
+}
+
+.cs-work .cs-ether-letter.is-run {
+  animation: cs-work-ether-a 1.45s var(--ease-calm) forwards;
+}
+
+.cs-work .cs-ether-letter--b.is-run {
+  animation-name: cs-work-ether-b;
+}
+
+@keyframes cs-work-ether-a {
+  0% {
+    color: var(--color-canvas);
+    filter: none;
+    text-shadow: none;
+  }
+  18% {
+    color: var(--color-teal);
+    text-shadow: 0 0 12px color-mix(in srgb, var(--color-teal) 45%, transparent);
+  }
+  36% {
+    color: var(--color-terracotta);
+    text-shadow: 0 0 12px color-mix(in srgb, var(--color-terracotta) 40%, transparent);
+  }
+  54% {
+    color: var(--color-teal);
+  }
+  72% {
+    color: var(--color-terracotta);
+  }
+  100% {
+    color: var(--color-canvas);
+    filter: none;
+    text-shadow: none;
+  }
+}
+
+@keyframes cs-work-ether-b {
+  0% {
+    color: var(--color-canvas);
+    filter: none;
+    text-shadow: none;
+  }
+  18% {
+    color: var(--color-terracotta);
+    text-shadow: 0 0 12px color-mix(in srgb, var(--color-terracotta) 40%, transparent);
+  }
+  36% {
+    color: var(--color-teal);
+    text-shadow: 0 0 12px color-mix(in srgb, var(--color-teal) 45%, transparent);
+  }
+  54% {
+    color: var(--color-terracotta);
+  }
+  72% {
+    color: var(--color-teal);
+  }
+  100% {
+    color: var(--color-canvas);
+    filter: none;
+    text-shadow: none;
+  }
+}
+
+.cs-contact .cs-ether-letter {
+  animation: none;
+  opacity: 1;
+  color: var(--color-ink);
+  filter: none;
+  text-shadow: none;
+}
+
+.cs-contact .cs-ether-letter.is-run {
+  animation: cs-contact-ether-a 1.45s var(--ease-calm) forwards;
+}
+
+.cs-contact .cs-ether-letter--b.is-run {
+  animation-name: cs-contact-ether-b;
+}
+
+@keyframes cs-contact-ether-a {
+  0% {
+    color: var(--color-ink);
+    filter: none;
+    text-shadow: none;
+  }
+  18% {
+    color: var(--color-teal);
+    text-shadow: 0 0 12px color-mix(in srgb, var(--color-teal) 45%, transparent);
+  }
+  36% {
+    color: var(--color-terracotta);
+    text-shadow: 0 0 12px color-mix(in srgb, var(--color-terracotta) 40%, transparent);
+  }
+  54% {
+    color: var(--color-teal);
+  }
+  72% {
+    color: var(--color-terracotta);
+  }
+  100% {
+    color: var(--color-ink);
+    filter: none;
+    text-shadow: none;
+  }
+}
+
+@keyframes cs-contact-ether-b {
+  0% {
+    color: var(--color-ink);
+    filter: none;
+    text-shadow: none;
+  }
+  18% {
+    color: var(--color-terracotta);
+    text-shadow: 0 0 12px color-mix(in srgb, var(--color-terracotta) 40%, transparent);
+  }
+  36% {
+    color: var(--color-teal);
+    text-shadow: 0 0 12px color-mix(in srgb, var(--color-teal) 45%, transparent);
+  }
+  54% {
+    color: var(--color-terracotta);
+  }
+  72% {
+    color: var(--color-teal);
+  }
+  100% {
+    color: var(--color-ink);
+    filter: none;
+    text-shadow: none;
+  }
 }
 
 .cs-work-intro,

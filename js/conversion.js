@@ -14,10 +14,44 @@
   const UPLOAD_VANISH_MS = 260;
 
   const GRANT_TYPES = [
-    "Tri-Agency Grant Proposal",
-    "KMb Campaign",
-    "Educational / Documentary Series",
+    "Grant Proposal Support",
+    "End of grant cycle reporting",
+    "SSHRC Grant",
+    "CIHR Grant",
+    "NSERC Grant",
+    "Funder Reporting",
+    "KMb Planning",
+    "Impact Mapping",
+    "Logic Models",
+    "Theories of Change",
     "Strategic Consulting",
+    "Public Health Messaging",
+    "Commercialization",
+    "Fundraising",
+    "Internal Communications",
+    "Knowledge Translation",
+    "Production Support / Filming",
+    "Educational Content",
+    "Documentary",
+    "Public Service Announcement",
+    "Campaign Media",
+    "Animation",
+    "Graphics",
+    "Web",
+    "Data Visualization",
+    "Qualitative Reporting",
+    "Reach Analytics",
+    "Other",
+  ];
+
+  const PARTNER_TYPES = [
+    "Institution",
+    "Researcher",
+    "Non Profit",
+    "Innovator",
+    "Social Enterprise",
+    "Gov Agency",
+    "Creative Agency",
     "Other",
   ];
 
@@ -391,16 +425,103 @@
     return parts.join("  ·  ");
   }
 
+  function DiscoveryWord({ play, reduced, wave }) {
+    if (reduced) return "discovery";
+    return h(
+      "span",
+      { className: "cs-ether-word" },
+      Array.from("discovery").map(function (char, index) {
+        return h(
+          "span",
+          {
+            key: wave + "-" + index,
+            className:
+              "cs-ether-letter cs-ether-letter--" +
+              (index % 2 === 0 ? "a" : "b") +
+              (play ? " is-run" : ""),
+            style: play ? { animationDelay: index * 36 + "ms" } : undefined,
+          },
+          char
+        );
+      })
+    );
+  }
+
   function FinalConversionSection() {
+    const headingRef = useRef(null);
     var _s = useState("idle");
     var phase = _s[0];
     var setPhase = _s[1];
     var _u = useState("");
     var uploadText = _u[0];
     var setUploadText = _u[1];
+    var _p = useState(false);
+    var etherPlay = _p[0];
+    var setEtherPlay = _p[1];
+    var _w = useState(0);
+    var etherWave = _w[0];
+    var setEtherWave = _w[1];
+    var _r = useState(false);
+    var reduced = _r[0];
+    var setReduced = _r[1];
 
     var isSubmitting = phase === "uploading" || phase === "vanishing";
     var isSuccess = phase === "done";
+
+    useEffect(function () {
+      const prefersReduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+      setReduced(prefersReduced);
+      if (prefersReduced) return undefined;
+
+      var done = false;
+      function reveal() {
+        if (done) return;
+        done = true;
+        setEtherPlay(true);
+      }
+
+      if (location.hash === "#contact") {
+        reveal();
+        return undefined;
+      }
+
+      const heading = headingRef.current;
+      const observer = new IntersectionObserver(
+        function (entries) {
+          if (entries[0] && entries[0].isIntersecting) {
+            reveal();
+            observer.disconnect();
+          }
+        },
+        { threshold: 0.55, rootMargin: "0px 0px -8% 0px" }
+      );
+      if (heading) observer.observe(heading);
+
+      function onHash() {
+        if (location.hash === "#contact") reveal();
+      }
+      window.addEventListener("hashchange", onHash);
+
+      return function () {
+        observer.disconnect();
+        window.removeEventListener("hashchange", onHash);
+      };
+    }, []);
+
+    useEffect(
+      function () {
+        if (reduced || !etherPlay) return undefined;
+        const id = window.setInterval(function () {
+          setEtherWave(function (wave) {
+            return wave + 1;
+          });
+        }, 10000);
+        return function () {
+          window.clearInterval(id);
+        };
+      },
+      [reduced, etherPlay]
+    );
 
     function handleSubmit(event) {
       event.preventDefault();
@@ -438,7 +559,7 @@
       "section",
       {
         id: "contact",
-        className: "border-t border-ink/10 bg-ink/[0.04] py-16 md:py-24",
+        className: "cs-contact border-t border-ink/10 bg-ink/[0.04] py-16 md:py-24",
         "aria-labelledby": "conversion-heading",
       },
       h(
@@ -447,13 +568,26 @@
         h("p", { className: "text-[0.7rem] font-medium uppercase tracking-wide text-teal" }, "Consultation"),
         h(
           "h2",
-          { id: "conversion-heading", className: "mt-3 text-4xl font-semibold tracking-tight md:text-5xl" },
-          "Schedule a free discovery call today"
+          {
+            ref: headingRef,
+            id: "conversion-heading",
+            className: "cs-ether mt-3 text-4xl font-semibold tracking-tight md:text-5xl",
+            "aria-label": "Schedule a free discovery call",
+          },
+          h(
+            "span",
+            { "aria-hidden": "true" },
+            "Schedule a free ",
+            h(DiscoveryWord, { play: etherPlay, reduced: reduced, wave: etherWave }),
+            " call"
+          )
         ),
         h(
           "p",
           { className: "mx-auto mt-5 max-w-xl text-base font-light leading-relaxed text-ink/80" },
-          "Tell us about your organization, project, and objectives. We'll provide you with a free KMb mind map to get the ball rolling."
+          "Tell us about your organization, project, and objectives.",
+          h("br"),
+          "We'll provide you with a free KMb mind map to get the ball rolling."
         )
       ),
       h(
@@ -522,19 +656,20 @@
                 h(
                   "label",
                   { className: "block text-sm font-medium text-ink" },
-                  "Organization / Institution",
-                  h("input", {
-                    className: fieldClass,
-                    type: "text",
-                    name: "organization",
-                    autoComplete: "organization",
-                    required: true,
-                  })
+                  "What best describes you?",
+                  h(
+                    "select",
+                    { className: fieldClass, name: "organization", defaultValue: "", required: true },
+                    h("option", { value: "", disabled: true }, "Select an option"),
+                    PARTNER_TYPES.map(function (option) {
+                      return h("option", { key: option, value: option }, option);
+                    })
+                  )
                 ),
                 h(
                   "label",
                   { className: "block text-sm font-medium text-ink" },
-                  "Project / Grant Type",
+                  "What can we help you with?",
                   h(
                     "select",
                     { className: fieldClass, name: "grantType", defaultValue: "" },
@@ -607,7 +742,7 @@
                   className:
                     "mt-6 w-full rounded-lg bg-terracotta px-5 py-3 text-sm font-medium tracking-wide text-canvas transition duration-300 ease-calm hover:bg-terracotta/90 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-terracotta disabled:cursor-wait disabled:opacity-70 md:w-auto",
                 },
-                isSubmitting ? "Sending…" : "Schedule a KMb Consultation"
+                isSubmitting ? "Sending…" : "Get Started"
               )
             )
       )

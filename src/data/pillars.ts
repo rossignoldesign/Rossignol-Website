@@ -28,7 +28,7 @@ export const pillarData: Pillar[] = [
     title: "Strategic Media Design",
     subhead:
       "Partnering to distill complex knowledge into accessible and resonant vehicles for impact.",
-    tags: ["Educational", "Documentary", "PSA", "Interactivity", "Animation", "Graphics", "Web", "Data Visualization"],
+    tags: ["Educational", "Documentary", "PSA", "Production Support", "Animation", "Graphics", "Web", "Data Visualization"],
     actionText: "Read Full Methodology",
     sections: [
       {
@@ -41,7 +41,7 @@ export const pillarData: Pillar[] = [
       },
       {
         heading: "Technical Excellence",
-        body: "Supported by an in-house team and a network of specialist partners, we deliver broadcasting-standard production values across video, animation, software, and design.",
+        body: "Supported by an in-house team and a network of specialist partners, we deliver broadcasting-standard production values and solve complex problems across video, animation, software, and design. We can be your one stop shop, or a member of your team.",
       },
     ],
   },

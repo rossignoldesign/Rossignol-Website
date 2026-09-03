@@ -401,14 +401,25 @@ function CategoryCarousel({
   onPlay: (video: CaseStudyVideo) => void;
 }) {
   const railRef = useRef<HTMLDivElement>(null);
+  const wrappingRef = useRef(false);
+  const smoothRef = useRef(false);
+  const smoothTimerRef = useRef<number>(0);
   const headingId = useId();
-  const [featuredIndex, setFeaturedIndex] = useState(0);
+  const videos = carousel.videos;
+  const n = videos.length;
+  const looped = n > 1 ? videos.concat(videos, videos) : videos;
+  const startIndex = n > 1 ? n : 0;
+  const [featuredIndex, setFeaturedIndex] = useState(startIndex);
 
-  function updateFeatured() {
-    const rail = railRef.current;
-    if (!rail) return;
+  function oneSetWidth(rail: HTMLDivElement) {
     const cards = rail.querySelectorAll<HTMLElement>(".cs-card");
-    if (!cards.length) return;
+    if (n < 2 || cards.length < n + 1) return 0;
+    return cards[n].offsetLeft - cards[0].offsetLeft;
+  }
+
+  function closestIndex(rail: HTMLDivElement) {
+    const cards = rail.querySelectorAll<HTMLElement>(".cs-card");
+    if (!cards.length) return 0;
     const railBox = rail.getBoundingClientRect();
     const center = railBox.left + railBox.width / 2;
     let next = 0;
@@ -421,7 +432,31 @@ function CategoryCarousel({
         next = index;
       }
     });
-    setFeaturedIndex(next);
+    return next;
+  }
+
+  function wrapIfNeeded() {
+    const rail = railRef.current;
+    if (!rail || n < 2 || wrappingRef.current) return;
+    const w = oneSetWidth(rail);
+    if (w < 8) return;
+    const next = closestIndex(rail);
+    if (next < n) {
+      wrappingRef.current = true;
+      rail.scrollLeft += w;
+      wrappingRef.current = false;
+    } else if (next >= n * 2) {
+      wrappingRef.current = true;
+      rail.scrollLeft -= w;
+      wrappingRef.current = false;
+    }
+  }
+
+  function updateFeatured() {
+    const rail = railRef.current;
+    if (!rail) return;
+    if (!smoothRef.current) wrapIfNeeded();
+    setFeaturedIndex(closestIndex(rail));
   }
 
   function centerCard(index: number, smooth = true) {
@@ -431,6 +466,15 @@ function CategoryCarousel({
     if (!card) return;
     const railBox = rail.getBoundingClientRect();
     const cardBox = card.getBoundingClientRect();
+    if (smooth) {
+      smoothRef.current = true;
+      window.clearTimeout(smoothTimerRef.current);
+      smoothTimerRef.current = window.setTimeout(() => {
+        smoothRef.current = false;
+        wrapIfNeeded();
+        updateFeatured();
+      }, 480);
+    }
     rail.scrollTo({
       left: rail.scrollLeft + (cardBox.left + cardBox.width / 2) - (railBox.left + railBox.width / 2),
       behavior: smooth ? "smooth" : "auto",
@@ -440,26 +484,36 @@ function CategoryCarousel({
   useEffect(() => {
     const rail = railRef.current;
     if (!rail) return;
+    const finishSmooth = () => {
+      smoothRef.current = false;
+      wrapIfNeeded();
+      updateFeatured();
+    };
     const frame = window.requestAnimationFrame(() => {
-      centerCard(0, false);
+      centerCard(startIndex, false);
       updateFeatured();
     });
     const later = window.setTimeout(() => {
-      centerCard(0, false);
+      centerCard(startIndex, false);
       updateFeatured();
     }, 250);
     rail.addEventListener("scroll", updateFeatured, { passive: true });
+    rail.addEventListener("scrollend", finishSmooth);
     window.addEventListener("resize", updateFeatured);
     return () => {
       window.cancelAnimationFrame(frame);
       window.clearTimeout(later);
       rail.removeEventListener("scroll", updateFeatured);
+      rail.removeEventListener("scrollend", finishSmooth);
       window.removeEventListener("resize", updateFeatured);
     };
   }, [carousel.id]);
 
   function scrollByCard(direction: number) {
-    centerCard(Math.min(carousel.videos.length - 1, Math.max(0, featuredIndex + direction)));
+    let next = featuredIndex + direction;
+    if (next < 0) next = 0;
+    if (next > looped.length - 1) next = looped.length - 1;
+    centerCard(next);
   }
 
   return (
@@ -495,9 +549,9 @@ function CategoryCarousel({
         className="cs-rail flex overflow-x-auto"
         aria-labelledby={headingId}
       >
-        {carousel.videos.map((video, index) => (
+        {looped.map((video, index) => (
           <CaseStudyCard
-            key={video.id}
+            key={`${video.id}-${index}`}
             video={video}
             featured={index === featuredIndex}
             onPlay={onPlay}
@@ -513,35 +567,45 @@ function EtherChars({
   play,
   reduced,
   delay,
+  wave,
 }: {
   text: string;
   play: boolean;
   reduced: boolean;
   delay: number;
+  wave: number;
 }) {
   let letterIndex = 0;
   return (
     <>
-      {Array.from(text).map((char, index) => {
-        const isSpace = char === " ";
-        const phase = isSpace ? 0 : letterIndex++;
-        const stagger = isSpace ? 0 : (letterIndex - 1) * 36;
-        const className = isSpace
-          ? "cs-ether-space"
-          : `cs-ether-letter cs-ether-letter--${phase % 2 === 0 ? "a" : "b"}`;
+      {text.split(/(\s+)/).map((token, tokenIndex) => {
+        if (!token) return null;
+        if (/^\s+$/.test(token)) {
+          return (
+            <span key={`space-${wave}-${tokenIndex}`} className={reduced ? undefined : "cs-ether-space"}>
+              &nbsp;
+            </span>
+          );
+        }
+        const letters = Array.from(token).map((char, index) => {
+          const phase = letterIndex++;
+          const stagger = (letterIndex - 1) * 36;
+          const className = `cs-ether-letter cs-ether-letter--${phase % 2 === 0 ? "a" : "b"}${
+            play ? " is-run" : ""
+          }`;
+          return (
+            <span
+              key={`${wave}-${tokenIndex}-${index}`}
+              className={reduced ? undefined : className}
+              style={reduced || !play ? undefined : { animationDelay: `${delay + stagger}ms` }}
+            >
+              {char}
+            </span>
+          );
+        });
         return (
-          <span
-            key={`${index}-${char}`}
-            className={reduced ? undefined : className}
-            style={
-              reduced
-                ? undefined
-                : play
-                  ? { animationDelay: `${delay + stagger}ms` }
-                  : { opacity: 0 }
-            }
-          >
-            {isSpace ? "\u00a0" : char}
+          <span key={`word-${wave}-${tokenIndex}`} className="cs-ether-word">
+            {letters}
           </span>
         );
       })}
@@ -549,7 +613,7 @@ function EtherChars({
   );
 }
 
-function EtherHeading({ play, reduced }: { play: boolean; reduced: boolean }) {
+function EtherHeading({ play, reduced, wave }: { play: boolean; reduced: boolean; wave: number }) {
   const words = ["Distilled", "Accessible", "Resonant"] as const;
 
   return (
@@ -559,17 +623,17 @@ function EtherHeading({ play, reduced }: { play: boolean; reduced: boolean }) {
       aria-label="KMb Media: Distilled, Accessible, Resonant"
     >
       <span className="cs-ether-line" aria-hidden="true">
-        <EtherChars text="KMb Media:" play={play} reduced={reduced} delay={0} />
+        <EtherChars text="KMb Media:" play={play} reduced={reduced} delay={0} wave={wave} />
       </span>
       <span className="cs-ether-line" aria-hidden="true">
         {words.map((word, index) => (
           <span key={word}>
             {index > 0 ? (
               <span className="cs-ether-pipe">
-                <EtherChars text=" | " play={play} reduced={reduced} delay={1200 + index * 1000} />
+                <EtherChars text=" | " play={play} reduced={reduced} delay={1200 + index * 1000} wave={wave} />
               </span>
             ) : null}
-            <EtherChars text={word} play={play} reduced={reduced} delay={1200 + index * 1000} />
+            <EtherChars text={word} play={play} reduced={reduced} delay={1200 + index * 1000} wave={wave} />
           </span>
         ))}
       </span>
@@ -585,6 +649,7 @@ export function CaseStudiesSection({
   const sectionRef = useRef<HTMLElement>(null);
   const [active, setActive] = useState<CaseStudyVideo | null>(null);
   const [revealed, setRevealed] = useState(false);
+  const [etherWave, setEtherWave] = useState(0);
   const [reduced, setReduced] = useState(false);
 
   useEffect(() => {
@@ -605,6 +670,7 @@ export function CaseStudiesSection({
 
     const section = sectionRef.current;
     const intro = section?.querySelector(".cs-work-intro") ?? section;
+    const heading = section?.querySelector("#case-studies-heading");
     const observer = new IntersectionObserver(
       ([entry]) => {
         if (entry.isIntersecting) {
@@ -612,9 +678,10 @@ export function CaseStudiesSection({
           observer.disconnect();
         }
       },
-      { threshold: 0.22, rootMargin: "0px 0px -12% 0px" }
+      { threshold: 0.45, rootMargin: "0px 0px -8% 0px" }
     );
-    if (intro) observer.observe(intro);
+    if (heading) observer.observe(heading);
+    else if (intro) observer.observe(intro);
 
     const timers: number[] = [];
     const sectionInView = () => {
@@ -651,6 +718,12 @@ export function CaseStudiesSection({
     };
   }, []);
 
+  useEffect(() => {
+    if (reduced || !revealed) return undefined;
+    const id = window.setInterval(() => setEtherWave((wave) => wave + 1), 10000);
+    return () => window.clearInterval(id);
+  }, [reduced, revealed]);
+
   return (
     <section
       ref={sectionRef}
@@ -660,7 +733,7 @@ export function CaseStudiesSection({
     >
       <div className="cs-work-intro mx-auto max-w-6xl px-6">
         <p className="text-[0.7rem] font-medium uppercase tracking-wide text-canvas/60">Selected Case Studies</p>
-        <EtherHeading play={revealed} reduced={reduced} />
+        <EtherHeading play={revealed} reduced={reduced} wave={etherWave} />
       </div>
 
       <div className="cs-work-body mt-16 space-y-16">

@@ -736,14 +736,24 @@
 
   function CategoryCarousel({ carousel, onPlay }) {
     const railRef = useRef(null);
+    const wrappingRef = useRef(false);
+    const smoothRef = useRef(false);
     const headingId = useId();
-    const [featuredIndex, setFeaturedIndex] = useState(0);
+    const videos = carousel.videos;
+    const n = videos.length;
+    const looped = n > 1 ? videos.concat(videos, videos) : videos;
+    const startIndex = n > 1 ? n : 0;
+    const [featuredIndex, setFeaturedIndex] = useState(startIndex);
 
-    function updateFeatured() {
-      const rail = railRef.current;
-      if (!rail) return;
+    function oneSetWidth(rail) {
       const cards = rail.querySelectorAll(".cs-card");
-      if (!cards.length) return;
+      if (n < 2 || cards.length < n + 1) return 0;
+      return cards[n].offsetLeft - cards[0].offsetLeft;
+    }
+
+    function closestIndex(rail) {
+      const cards = rail.querySelectorAll(".cs-card");
+      if (!cards.length) return 0;
       const railBox = rail.getBoundingClientRect();
       const center = railBox.left + railBox.width / 2;
       var next = 0;
@@ -756,7 +766,31 @@
           next = index;
         }
       });
-      setFeaturedIndex(next);
+      return next;
+    }
+
+    function wrapIfNeeded() {
+      const rail = railRef.current;
+      if (!rail || n < 2 || wrappingRef.current) return;
+      const w = oneSetWidth(rail);
+      if (w < 8) return;
+      const next = closestIndex(rail);
+      if (next < n) {
+        wrappingRef.current = true;
+        rail.scrollLeft += w;
+        wrappingRef.current = false;
+      } else if (next >= n * 2) {
+        wrappingRef.current = true;
+        rail.scrollLeft -= w;
+        wrappingRef.current = false;
+      }
+    }
+
+    function updateFeatured() {
+      const rail = railRef.current;
+      if (!rail) return;
+      if (!smoothRef.current) wrapIfNeeded();
+      setFeaturedIndex(closestIndex(rail));
     }
 
     function centerCard(index, smooth) {
@@ -766,6 +800,15 @@
       if (!card) return;
       const railBox = rail.getBoundingClientRect();
       const cardBox = card.getBoundingClientRect();
+      if (smooth) {
+        smoothRef.current = true;
+        window.clearTimeout(rail._csSmoothTimer);
+        rail._csSmoothTimer = window.setTimeout(function () {
+          smoothRef.current = false;
+          wrapIfNeeded();
+          updateFeatured();
+        }, 480);
+      }
       rail.scrollTo({
         left: rail.scrollLeft + (cardBox.left + cardBox.width / 2) - (railBox.left + railBox.width / 2),
         behavior: smooth ? "smooth" : "auto",
@@ -776,20 +819,27 @@
       function () {
         const rail = railRef.current;
         if (!rail) return;
+        function finishSmooth() {
+          smoothRef.current = false;
+          wrapIfNeeded();
+          updateFeatured();
+        }
         const frame = window.requestAnimationFrame(function () {
-          centerCard(0, false);
+          centerCard(startIndex, false);
           updateFeatured();
         });
         const later = window.setTimeout(function () {
-          centerCard(0, false);
+          centerCard(startIndex, false);
           updateFeatured();
         }, 250);
         rail.addEventListener("scroll", updateFeatured, { passive: true });
+        rail.addEventListener("scrollend", finishSmooth);
         window.addEventListener("resize", updateFeatured);
         return function () {
           window.cancelAnimationFrame(frame);
           window.clearTimeout(later);
           rail.removeEventListener("scroll", updateFeatured);
+          rail.removeEventListener("scrollend", finishSmooth);
           window.removeEventListener("resize", updateFeatured);
         };
       },
@@ -797,10 +847,10 @@
     );
 
     function scrollByCard(direction) {
-      centerCard(
-        Math.min(carousel.videos.length - 1, Math.max(0, featuredIndex + direction)),
-        true
-      );
+      var next = featuredIndex + direction;
+      if (next < 0) next = 0;
+      if (next > looped.length - 1) next = looped.length - 1;
+      centerCard(next, true);
     }
 
     return h(
@@ -854,13 +904,12 @@
         "div",
         {
           ref: railRef,
-          className:
-            "cs-rail flex overflow-x-auto",
+          className: "cs-rail flex overflow-x-auto",
           "aria-labelledby": headingId,
         },
-        carousel.videos.map(function (video, index) {
+        looped.map(function (video, index) {
           return h(CaseStudyCard, {
-            key: video.id,
+            key: video.id + "-" + index,
             video: video,
             featured: index === featuredIndex,
             onPlay: onPlay,
@@ -870,35 +919,35 @@
     );
   }
 
-  function EtherChars({ text, play, reduced, delay }) {
+  function EtherChars({ text, play, reduced, delay, wave }) {
     let letterIndex = 0;
     return text.split(/(\s+)/).map(function (token, tokenIndex) {
       if (!token) return null;
       if (/^\s+$/.test(token)) {
-        return h("span", { key: "space-" + tokenIndex, className: reduced ? undefined : "cs-ether-space" }, "\u00a0");
+        return h("span", { key: "space-" + wave + "-" + tokenIndex, className: reduced ? undefined : "cs-ether-space" }, "\u00a0");
       }
       const letters = Array.from(token).map(function (char, index) {
         const phase = letterIndex++;
         const stagger = (letterIndex - 1) * 36;
+        const className =
+          "cs-ether-letter cs-ether-letter--" +
+          (phase % 2 === 0 ? "a" : "b") +
+          (play ? " is-run" : "");
         return h(
           "span",
           {
-            key: tokenIndex + "-" + index,
-            className: reduced ? undefined : "cs-ether-letter cs-ether-letter--" + (phase % 2 === 0 ? "a" : "b"),
-            style: reduced
-              ? undefined
-              : play
-                ? { animationDelay: delay + stagger + "ms" }
-                : { opacity: 0 },
+            key: wave + "-" + tokenIndex + "-" + index,
+            className: reduced ? undefined : className,
+            style: reduced || !play ? undefined : { animationDelay: delay + stagger + "ms" },
           },
           char
         );
       });
-      return h("span", { key: "word-" + tokenIndex, className: "cs-ether-word" }, letters);
+      return h("span", { key: "word-" + wave + "-" + tokenIndex, className: "cs-ether-word" }, letters);
     });
   }
 
-  function EtherHeading({ play, reduced }) {
+  function EtherHeading({ play, reduced, wave }) {
     const words = ["Distilled", "Accessible", "Resonant"];
     return h(
       "h2",
@@ -910,7 +959,7 @@
       h(
         "span",
         { className: "cs-ether-line", "aria-hidden": "true" },
-        h(EtherChars, { text: "KMb Media:", play: play, reduced: reduced, delay: 0 })
+        h(EtherChars, { text: "KMb Media:", play: play, reduced: reduced, delay: 0, wave: wave })
       ),
       h(
         "span",
@@ -928,6 +977,7 @@
                     play: play,
                     reduced: reduced,
                     delay: 1200 + index * 1000,
+                    wave: wave,
                   })
                 )
               : null,
@@ -936,6 +986,7 @@
               play: play,
               reduced: reduced,
               delay: 1200 + index * 1000,
+              wave: wave,
             })
           );
         })
@@ -947,6 +998,7 @@
     const sectionRef = useRef(null);
     const [active, setActive] = useState(null);
     const [revealed, setRevealed] = useState(false);
+    const [etherWave, setEtherWave] = useState(0);
     const [reduced, setReduced] = useState(false);
     const data = carousels || caseStudiesData;
 
@@ -968,6 +1020,7 @@
 
       const section = sectionRef.current;
       const intro = (section && section.querySelector(".cs-work-intro")) || section;
+      const heading = section && section.querySelector("#case-studies-heading");
       const observer = new IntersectionObserver(
         function (entries) {
           if (entries[0] && entries[0].isIntersecting) {
@@ -975,9 +1028,10 @@
             observer.disconnect();
           }
         },
-        { threshold: 0.22, rootMargin: "0px 0px -12% 0px" }
+        { threshold: 0.45, rootMargin: "0px 0px -8% 0px" }
       );
-      if (intro) observer.observe(intro);
+      if (heading) observer.observe(heading);
+      else if (intro) observer.observe(intro);
 
       const timers = [];
       function sectionInView() {
@@ -1017,6 +1071,21 @@
       };
     }, []);
 
+    useEffect(
+      function () {
+        if (reduced || !revealed) return undefined;
+        const id = window.setInterval(function () {
+          setEtherWave(function (wave) {
+            return wave + 1;
+          });
+        }, 10000);
+        return function () {
+          window.clearInterval(id);
+        };
+      },
+      [reduced, revealed]
+    );
+
     return h(
       "section",
       {
@@ -1029,7 +1098,7 @@
         "div",
         { className: "cs-work-intro mx-auto max-w-6xl px-6" },
         h("p", { className: "text-[0.7rem] font-medium uppercase tracking-wide text-canvas/60" }, "Selected Case Studies"),
-        h(EtherHeading, { play: revealed, reduced: reduced })
+        h(EtherHeading, { play: revealed, reduced: reduced, wave: etherWave })
       ),
       h(
         "div",
