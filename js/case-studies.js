@@ -872,26 +872,29 @@
 
   function EtherChars({ text, play, reduced, delay }) {
     let letterIndex = 0;
-    return text.split("").map(function (char, index) {
-      const isSpace = char === " ";
-      const phase = isSpace ? 0 : letterIndex++;
-      const stagger = isSpace ? 0 : (letterIndex - 1) * 36;
-      const className = isSpace
-        ? "cs-ether-space"
-        : "cs-ether-letter cs-ether-letter--" + (phase % 2 === 0 ? "a" : "b");
-      return h(
-        "span",
-        {
-          key: index + "-" + char,
-          className: reduced ? undefined : className,
-          style: reduced
-            ? undefined
-            : play
-              ? { animationDelay: delay + stagger + "ms" }
-              : { opacity: 0 },
-        },
-        isSpace ? "\u00a0" : char
-      );
+    return text.split(/(\s+)/).map(function (token, tokenIndex) {
+      if (!token) return null;
+      if (/^\s+$/.test(token)) {
+        return h("span", { key: "space-" + tokenIndex, className: reduced ? undefined : "cs-ether-space" }, "\u00a0");
+      }
+      const letters = Array.from(token).map(function (char, index) {
+        const phase = letterIndex++;
+        const stagger = (letterIndex - 1) * 36;
+        return h(
+          "span",
+          {
+            key: tokenIndex + "-" + index,
+            className: reduced ? undefined : "cs-ether-letter cs-ether-letter--" + (phase % 2 === 0 ? "a" : "b"),
+            style: reduced
+              ? undefined
+              : play
+                ? { animationDelay: delay + stagger + "ms" }
+                : { opacity: 0 },
+          },
+          char
+        );
+      });
+      return h("span", { key: "word-" + tokenIndex, className: "cs-ether-word" }, letters);
     });
   }
 

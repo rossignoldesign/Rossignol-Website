@@ -513,7 +513,7 @@ export function FinalConversionSection() {
                           bottom: 0,
                           pointerEvents: "none",
                           whiteSpace: "pre-wrap",
-                          wordBreak: "break-word",
+                          overflowWrap: "normal",
                           overflow: "hidden",
                         }}
                       >
