@@ -1,0 +1,6 @@
+.DS_Store
+.cursor/
+*.mp4
+*.mov
+!public/**/*.mp4
+!public/**/*.mov

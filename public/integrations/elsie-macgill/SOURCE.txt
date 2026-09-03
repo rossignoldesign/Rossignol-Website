@@ -1,0 +1,5 @@
+Captured: 2026-08-31
+Original: https://www.cbc.ca/elsiemacgill/
+Scope: Royal Canadian Mint / Elsie MacGill CBC paid-content microsite (interactive feature, timeline, in-page YouTube).
+Removed: CBC global chrome, ads, analytics, third-party trackers.
+Video: YouTube embed yecVqONf5oQ remains remote (player allows embedding).

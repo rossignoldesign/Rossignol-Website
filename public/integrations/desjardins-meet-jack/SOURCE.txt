@@ -1,0 +1,5 @@
+Captured: 2026-08-31
+Original: https://www.cbc.ca/desjardinsageinsurance/meetchange/meet-jack.php
+Scope: Desjardins Meet Change microsite (Meet Jack entry plus related Meet Change / Meet Our People / Meet Our Clients pages).
+Removed: CBC global chrome, ads, analytics, third-party trackers, tracking query on original URL.
+Video: YouTube embed 7widkuwuqMc remains remote (player allows embedding).

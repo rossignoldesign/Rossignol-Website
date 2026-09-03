@@ -1,0 +1,5 @@
+Captured: 2026-08-31
+Original: https://www.cbc.ca/comeandsaygday/
+Scope: Tourism Australia / CBC Come and Say G'day microsite (home, articles, episodes, hero video, assets).
+Removed: CBC global chrome, ads, analytics, third-party trackers.
+Paths rewritten to /public/integrations/come-and-say-gday/

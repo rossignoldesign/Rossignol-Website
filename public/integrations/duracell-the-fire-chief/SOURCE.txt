@@ -1,0 +1,5 @@
+Captured: 2026-08-31
+Original: https://www.cbc.ca/duracell/the-fire-chief.php
+Scope: Duracell CBC paid-content microsite (article, homepage, 72-hour feature, quiz, in-page video).
+Removed: CBC global chrome, ads, analytics, third-party trackers.
+Video: Duracell_Optimum_-_Thetis_Is._Fire_Chief_v4_subtitled_2000.mp4 stored as video.mp4
