@@ -13,19 +13,19 @@ export const caseStudiesData: CaseStudyCarousel[] = [
         tagline: "Educating wide audiences while raising brand reputation",
         clientType: "Crown Corporation & Public Institution",
         summary:
-          "Developed in partnership with CBC, this national campaign translated the historical legacy of pioneering aeronautical engineer Elsie MacGill into an interactive, fully bilingual media experience. By pairing custom animation with editorial storytelling hosted by opinion leader Liz Plank, the initiative elevated public awareness of Canadian STEM innovation while reinforcing the Mint’s role as a steward of national history and progressive values.",
+          "Developed in collaboration with a full-stack team at CBC, this national campaign translated the historical legacy of pioneering aeronautical engineer Elsie MacGill into an interactive, fully bilingual media experience. Anchored by custom animation and editorial storytelling hosted by opinion leader Liz Plank, the initiative elevated public awareness of Canadian STEM innovation while reinforcing the Mint’s role as a steward of national history and progressive values.",
         points: [
           {
             heading: "Experimental Multi-Format Translation",
-            body: "Combined custom visual animation, interactive digital timelines, and an engaging host-driven narrative to distill dense historical archives into high-uptake public content.",
+            body: "Enriched by custom visual animation, interactive digital timelines, and a host-driven narrative that distilled dense historical archives into high-uptake public content.",
           },
           {
             heading: "Bilingual Accessibility & Ecosystem Distribution",
-            body: "Fully produced in both English and French to maximize equitable nationwide reach, supported by a programmatic ad suite driving direct traffic to a custom CBC web integration.",
+            body: "Delivered in both English and French to maximize nationwide reach, supported by a programmatic ad suite driving direct traffic to a custom CBC web integration.",
           },
           {
             heading: "Institutional Reputation & Equity Alignment",
-            body: "Strengthened public trust and institutional brand equity by linking a commemorative currency launch to larger societal conversations around gender equity, STEM representation, and civic leadership.",
+            body: "Designed to strengthen public trust and institutional brand equity by linking a commemorative currency launch to larger societal conversations around gender equity, STEM representation, and civic leadership.",
           },
         ],
         vimeoUrl: "https://vimeo.com/1222393877?share=copy&fl=sv&fe=ci",
@@ -92,19 +92,19 @@ export const caseStudiesData: CaseStudyCarousel[] = [
         tagline: "Experiential learning promotes cultural exchange & mutual understanding",
         clientType: "Government Agency & Institutional Broadcaster Partnership",
         summary:
-          "Produced in partnership with CBC, this campaign translated nature, culinary, and Indigenous cultural narratives into an immersive three-part docuseries streamable on CBC Gem. By leveraging influencer-led experiential storytelling, the project balanced international tourism promotion while adhering to journalistic standards at the level people expect from CBC—creating a high-uptake content package that was renewed for a second season.",
+          "Produced in collaboration with CBC, this campaign translated nature, culinary, and Indigenous cultural narratives into an immersive three-part docuseries streamed on CBC Gem. Built around influencer-led experiential storytelling, the project balanced international tourism promotion with institutional broadcasting standards—creating a high-uptake content package that was renewed for a second season.",
         points: [
           {
             heading: "Ethical Co-Production & Cultural Alignment",
-            body: "Navigated extensive consultation frameworks to respectfully feature sensitive Indigenous cultural traditions, ensuring authentic community representation while preserving editorial integrity.",
+            body: "Navigated multi-stakeholder consultation frameworks to respectfully feature sensitive Indigenous cultural traditions, ensuring authentic community representation while preserving project integrity.",
           },
           {
-            heading: "Innovative Ecosystem & Streaming Firsts",
-            body: "Built a landmark branded-content model for CBC Gem—combining three 10-minute mini-documentaries with a custom web integration, YouTube placement, and targeted programmatic ad suites.",
+            heading: "Innovative Ecosystem & Multi-Platform Reach",
+            body: "Executed within a landmark branded-content format for CBC Gem—integrating three mini-documentaries with custom web placements, YouTube distribution, and targeted digital ad suites.",
           },
           {
-            heading: "Institutional Integrity & Sustained Reach",
-            body: "Harmonized government promotional goals with authentic documentary storytelling, building audience trust and measurable impact on intent to travel that secured an immediate multi-season reboot.",
+            heading: "Institutional Integrity & Sustained Impact",
+            body: "Harmonized destination marketing goals with authentic documentary storytelling, building audience trust and measurable engagement that secured an immediate second-season renewal.",
           },
         ],
         vimeoUrl: "https://vimeo.com/1222392988?fl=pl&fe=sh",
@@ -143,19 +143,19 @@ export const caseStudiesData: CaseStudyCarousel[] = [
         tagline: "Amplifying the voices of outliers to help shift norms",
         clientType: "Corporate Brand & Non-Profit Partnership",
         summary:
-          "Highlighting the unseen contributions of remote volunteer firefighters, this multi-platform campaign centered on female leadership, community resilience, and critical fire safety practices. By pairing high-resonance documentary storytelling with national recognition, the initiative shifted public perception while illustrating the role of reliable technology in life-saving environments.",
+          "Highlighting the unseen contributions of remote volunteer firefighters, this multi-platform campaign centered on female leadership, community resilience, and critical fire safety practices. Built around high-resonance documentary storytelling and national recognition, the initiative elevated public awareness while illustrating the vital role of reliable technology in life-saving environments.",
         points: [
           {
             heading: "Audience Alignment & Narrative Shift",
-            body: "Elevates the story of a rural female Fire Chief to challenge traditional stereotypes, foster public empathy, and amplify civic engagement across remote communities.",
+            body: "Framed the story of a rural female Fire Chief to challenge traditional stereotypes, foster public empathy, and amplify civic engagement across remote communities.",
           },
           {
             heading: "Strategic Partner Mobilization",
-            body: "Coordinated a national Lifetime Achievement Award between Duracell and the Canadian Volunteer Fire Services Association (CVFSA) to ground brand trust in authentic community impact.",
+            body: "Facilitated a national Lifetime Achievement Award in collaboration with Duracell and the Canadian Volunteer Fire Services Association (CVFSA) to ground brand trust in authentic community impact.",
           },
           {
             heading: "Integrated Multi-Platform Translation",
-            body: "Distilled core evidence and safety messaging into a cohesive media ecosystem—combining cinematic documentary film, programmatic digital ads, and custom CBC web feature integration.",
+            body: "Translating core safety messaging into a cohesive media ecosystem—combining cinematic documentary film, programmatic digital ads, and custom web feature integrations.",
           },
         ],
         vimeoUrl: "https://vimeo.com/1015777206",
@@ -199,15 +199,15 @@ export const caseStudiesData: CaseStudyCarousel[] = [
         tagline: "PSAs can promote social change…",
         clientType: "Non-Profit Destination Marketing Organization",
         summary:
-          "Designed to promote Montréal’s vibrant winter culture, this targeted campaign transformed passive social media consumption into real-world cultural participation. Using a self-aware PSA concept alongside motion graphics and screen compositing, the video demonstrated the utility of Tourisme Montréal’s app, encouraging users to step off social channels and explore local night markets, performances, and seasonal events.",
+          "Produced in collaboration with CBC, this targeted campaign transformed passive social media consumption into real-world cultural participation to promote Montréal’s vibrant winter culture. Built around a self-aware PSA concept featuring motion graphics and screen compositing, the video demonstrated the utility of Tourisme Montréal’s app—encouraging users to step off social channels and explore local night markets, performances, and seasonal events.",
         points: [
           {
-            heading: "Behavioral Shift & Meta Narrative Framing",
+            heading: "Behavioral Shift & Meta-Narrative Framing",
             body: "Leveraged a self-reflective \"get off your phone\" narrative strategy across social platforms, meeting digital users where they scroll to prompt direct behavioral transition into offline cultural spaces.",
           },
           {
             heading: "Technical Motion & Compositing Integration",
-            body: "Used custom graphic animations and mobile UI compositing to seamlessly showcase app features within high-energy promotional scenes, lowering cognitive friction for app adoption.",
+            body: "Featured custom graphic animations and mobile UI compositing to showcase app features within high-energy promotional scenes, lowering cognitive friction for app adoption.",
           },
           {
             heading: "Targeted Digital Conversion",
