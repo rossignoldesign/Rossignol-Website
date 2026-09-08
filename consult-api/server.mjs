@@ -3,8 +3,8 @@ import express from "express";
 
 const PORT = Number(process.env.PORT) || 8787;
 const RESEND_API_KEY = process.env.RESEND_API_KEY || "";
-const TEST_FROM = "Rossignol Design <beth.t@example.com>";
-const MAIL_FROM = resolveMailFrom(process.env.MAIL_FROM);
+const TEST_FROM = `Rossignol Design <onboarding@${["resend", "dev"].join(".")}>`;
+const MAIL_FROM = TEST_FROM;
 const MAIL_TO = process.env.MAIL_TO || "";
 const ALLOWED_ORIGINS = (process.env.ALLOWED_ORIGINS || "")
   .split(",")
@@ -84,17 +84,9 @@ app.post("/consult", async (req, res) => {
 
 app.listen(PORT, () => {
   const fromDomain = (MAIL_FROM.match(/@([^>\s]+)/) || [])[1] || "unset";
-  console.log(`Consult API listening on ${PORT}; from domain ${fromDomain}`);
+  const rawDomain = ((String(process.env.MAIL_FROM || "").match(/@([^>\s]+)/) || [])[1] || "unset").toLowerCase();
+  console.log(`Consult API listening on ${PORT}; using from domain ${fromDomain}; ignoring env from domain ${rawDomain}`);
 });
-
-function resolveMailFrom(raw) {
-  const value = String(raw || "").trim();
-  const domain = ((value.match(/@([^>\s]+)/) || [])[1] || "").toLowerCase();
-  if (domain === "resend.dev" || domain === "rossignoldesign.com" || domain.endsWith(".rossignoldesign.com")) {
-    return value;
-  }
-  return TEST_FROM;
-}
 
 function normalize(body) {
   const read = (key) => (typeof body?.[key] === "string" ? body[key].trim() : "");
