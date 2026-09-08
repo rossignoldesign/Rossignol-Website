@@ -3,8 +3,8 @@ import express from "express";
 
 const PORT = Number(process.env.PORT) || 8787;
 const RESEND_API_KEY = process.env.RESEND_API_KEY || "";
-const TEST_FROM = `Rossignol Design <onboarding@${["resend", "dev"].join(".")}>`;
-const MAIL_FROM = TEST_FROM;
+const DEFAULT_FROM = "Rossignol Design <hello@mail.rossignoldesign.com>";
+const MAIL_FROM = resolveMailFrom(process.env.MAIL_FROM);
 const MAIL_TO = process.env.MAIL_TO || "";
 const ALLOWED_ORIGINS = (process.env.ALLOWED_ORIGINS || "")
   .split(",")
@@ -84,9 +84,17 @@ app.post("/consult", async (req, res) => {
 
 app.listen(PORT, () => {
   const fromDomain = (MAIL_FROM.match(/@([^>\s]+)/) || [])[1] || "unset";
-  const rawDomain = ((String(process.env.MAIL_FROM || "").match(/@([^>\s]+)/) || [])[1] || "unset").toLowerCase();
-  console.log(`Consult API listening on ${PORT}; using from domain ${fromDomain}; ignoring env from domain ${rawDomain}`);
+  console.log(`Consult API listening on ${PORT}; from domain ${fromDomain}`);
 });
+
+function resolveMailFrom(raw) {
+  const value = String(raw || "").trim().replace(/^["']|["']$/g, "");
+  const domain = ((value.match(/@([^>\s]+)/) || [])[1] || "").toLowerCase();
+  if (domain === "mail.rossignoldesign.com" || domain === "rossignoldesign.com") {
+    return value;
+  }
+  return DEFAULT_FROM;
+}
 
 function normalize(body) {
   const read = (key) => (typeof body?.[key] === "string" ? body[key].trim() : "");
@@ -198,7 +206,7 @@ function publicMailError(error) {
     return "Mail was rejected. Check the Resend API key, and send only to the email on that Resend account until the domain is verified.";
   }
   if (detail.includes("Resend 422") || /from/i.test(detail)) {
-    return "Mail was rejected. MAIL_FROM must stay Rossignol Design <beth.t@example.com> until you verify a sending domain.";
+    return "Mail was rejected. Check MAIL_FROM is Rossignol Design <hello@mail.rossignoldesign.com>.";
   }
   return "Could not send the request. Please try again.";
 }
