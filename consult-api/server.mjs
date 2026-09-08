@@ -3,7 +3,8 @@ import express from "express";
 
 const PORT = Number(process.env.PORT) || 8787;
 const RESEND_API_KEY = process.env.RESEND_API_KEY || "";
-const MAIL_FROM = process.env.MAIL_FROM || "Rossignol Design <beth.t@example.com>";
+const TEST_FROM = "Rossignol Design <beth.t@example.com>";
+const MAIL_FROM = resolveMailFrom(process.env.MAIL_FROM);
 const MAIL_TO = process.env.MAIL_TO || "";
 const ALLOWED_ORIGINS = (process.env.ALLOWED_ORIGINS || "")
   .split(",")
@@ -33,7 +34,8 @@ app.use(
 );
 
 app.get("/health", (_req, res) => {
-  res.json({ ok: true });
+  const fromDomain = (MAIL_FROM.match(/@([^>\s]+)/) || [])[1] || "unset";
+  res.json({ ok: true, fromDomain });
 });
 
 app.post("/consult", async (req, res) => {
@@ -62,23 +64,37 @@ app.post("/consult", async (req, res) => {
       text: studioText(payload),
     });
 
-    await sendMail({
-      to: payload.email,
-      subject: "We received your Rossignol Design consultation request",
-      html: visitorHtml(payload),
-      text: visitorText(payload),
-    });
+    try {
+      await sendMail({
+        to: payload.email,
+        subject: "We received your Rossignol Design consultation request",
+        html: visitorHtml(payload),
+        text: visitorText(payload),
+      });
+    } catch (error) {
+      console.error("Visitor confirmation failed:", error);
+    }
 
     res.json({ ok: true });
   } catch (error) {
     console.error(error);
-    res.status(500).json({ ok: false, errors: ["Could not send the request. Please try again."] });
+    res.status(500).json({ ok: false, errors: [publicMailError(error)] });
   }
 });
 
 app.listen(PORT, () => {
-  console.log(`Consult API listening on ${PORT}`);
+  const fromDomain = (MAIL_FROM.match(/@([^>\s]+)/) || [])[1] || "unset";
+  console.log(`Consult API listening on ${PORT}; from domain ${fromDomain}`);
 });
+
+function resolveMailFrom(raw) {
+  const value = String(raw || "").trim();
+  const domain = ((value.match(/@([^>\s]+)/) || [])[1] || "").toLowerCase();
+  if (domain === "resend.dev" || domain === "rossignoldesign.com" || domain.endsWith(".rossignoldesign.com")) {
+    return value;
+  }
+  return TEST_FROM;
+}
 
 function normalize(body) {
   const read = (key) => (typeof body?.[key] === "string" ? body[key].trim() : "");
@@ -182,4 +198,15 @@ async function sendMail({ to, subject, html, text, replyTo }) {
     const detail = await response.text();
     throw new Error(`Resend ${response.status}: ${detail}`);
   }
+}
+
+function publicMailError(error) {
+  const detail = String(error?.message || "");
+  if (detail.includes("Resend 401") || detail.includes("Resend 403")) {
+    return "Mail was rejected. Check the Resend API key, and send only to the email on that Resend account until the domain is verified.";
+  }
+  if (detail.includes("Resend 422") || /from/i.test(detail)) {
+    return "Mail was rejected. MAIL_FROM must stay Rossignol Design <beth.t@example.com> until you verify a sending domain.";
+  }
+  return "Could not send the request. Please try again.";
 }
