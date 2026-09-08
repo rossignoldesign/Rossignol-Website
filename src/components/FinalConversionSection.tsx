@@ -395,6 +395,7 @@ export function FinalConversionSection() {
   const headingRef = useRef<HTMLHeadingElement>(null);
   const [phase, setPhase] = useState<"idle" | "uploading" | "vanishing" | "done">("idle");
   const [uploadText, setUploadText] = useState("");
+  const [submitError, setSubmitError] = useState("");
   const [etherPlay, setEtherPlay] = useState(false);
   const [etherWave, setEtherWave] = useState(0);
   const [reduced, setReduced] = useState(false);
@@ -448,35 +449,62 @@ export function FinalConversionSection() {
     return () => window.clearInterval(id);
   }, [reduced, etherPlay]);
 
-  function handleSubmit(event: FormEvent<HTMLFormElement>) {
+  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (phase !== "idle") return;
 
-    const textarea = event.currentTarget.querySelector("textarea[name=overview]") as HTMLTextAreaElement | null;
-    const text = textarea?.value ?? "";
+    const form = event.currentTarget;
+    const data = new FormData(form);
+    const overview = String(data.get("overview") || "");
+    const payload = {
+      name: String(data.get("name") || ""),
+      email: String(data.get("email") || ""),
+      organization: String(data.get("organization") || ""),
+      grantType: String(data.get("grantType") || ""),
+      timeline: String(data.get("timeline") || ""),
+      schedule: String(data.get("schedule") || ""),
+      overview,
+      website: String(data.get("website") || ""),
+    };
 
-    if (!text.trim()) {
-      setUploadText("");
-      setPhase("uploading");
-      window.setTimeout(() => setPhase("done"), 400);
+    const endpoint =
+      typeof window !== "undefined" ? (window as Window & { ROSSIGNOL_CONSULT_ENDPOINT?: string }).ROSSIGNOL_CONSULT_ENDPOINT : "";
+    if (!endpoint) {
+      setSubmitError("The consultation endpoint is not configured yet.");
       return;
     }
 
-    setUploadText(text);
+    setSubmitError("");
+    setUploadText(overview.trim());
     setPhase("uploading");
 
-    const charCount = text.replace(/\s/g, "").length;
-    const waveMs = UPLOAD_MS + Math.min(Math.max(0, charCount - 1) * UPLOAD_STAGGER, UPLOAD_STAGGER_MAX);
+    try {
+      const response = await fetch(endpoint, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+      const result = await response.json().catch(() => ({}));
+      if (!response.ok || !result.ok) {
+        throw new Error(Array.isArray(result.errors) ? result.errors[0] : "Could not send the request.");
+      }
+    } catch (error) {
+      setPhase("idle");
+      setSubmitError(error instanceof Error ? error.message : "Could not send the request. Please try again.");
+      return;
+    }
 
     if (prefersReducedMotion()) {
       window.setTimeout(() => setPhase("done"), 200);
       return;
     }
 
+    const charCount = overview.replace(/\s/g, "").length;
+    const waveMs = UPLOAD_MS + Math.min(Math.max(0, charCount - 1) * UPLOAD_STAGGER, UPLOAD_STAGGER_MAX);
     window.setTimeout(() => {
       setPhase("vanishing");
       window.setTimeout(() => setPhase("done"), UPLOAD_VANISH_MS);
-    }, waveMs);
+    }, overview.trim() ? waveMs : 400);
   }
 
   return (
@@ -541,6 +569,7 @@ export function FinalConversionSection() {
               transition={{ duration: 0.32, ease: CALM_EASE }}
             >
               <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
+                <input type="text" name="website" tabIndex={-1} autoComplete="off" className="hidden" aria-hidden="true" />
                 <label className="block text-sm font-medium text-ink">
                   Name
                   <input
@@ -643,6 +672,11 @@ export function FinalConversionSection() {
               >
                 {isSubmitting ? "Sending…" : "Get Started"}
               </button>
+              {submitError ? (
+                <p className="mt-3 text-sm font-light text-terracotta" role="alert">
+                  {submitError}
+                </p>
+              ) : null}
             </motion.form>
           )}
         </AnimatePresence>

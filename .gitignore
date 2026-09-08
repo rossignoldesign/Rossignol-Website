@@ -1,5 +1,7 @@
 .DS_Store
 .cursor/
+node_modules/
+consult-api/.env
 
 # Unused local masters (over GitHub's 100MB file limit)
 Website Content/CBC Awards*.mp4

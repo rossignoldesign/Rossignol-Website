@@ -461,6 +461,9 @@
     var _w = useState(0);
     var etherWave = _w[0];
     var setEtherWave = _w[1];
+    var _e = useState("");
+    var submitError = _e[0];
+    var setSubmitError = _e[1];
     var _r = useState(false);
     var reduced = _r[0];
     var setReduced = _r[1];
@@ -527,32 +530,59 @@
       event.preventDefault();
       if (phase !== "idle") return;
 
-      var textarea = event.target.querySelector("textarea[name=overview]");
-      var text = textarea ? textarea.value : "";
-      if (!text.trim()) {
-        setUploadText("");
-        setPhase("uploading");
-        window.setTimeout(function () { setPhase("done"); }, 400);
+      var form = event.target;
+      var data = new FormData(form);
+      var overview = String(data.get("overview") || "");
+      var payload = {
+        name: String(data.get("name") || ""),
+        email: String(data.get("email") || ""),
+        organization: String(data.get("organization") || ""),
+        grantType: String(data.get("grantType") || ""),
+        timeline: String(data.get("timeline") || ""),
+        schedule: String(data.get("schedule") || ""),
+        overview: overview,
+        website: String(data.get("website") || ""),
+      };
+      var endpoint = window.ROSSIGNOL_CONSULT_ENDPOINT;
+      if (!endpoint) {
+        setSubmitError("The consultation endpoint is not configured yet.");
         return;
       }
 
-      setUploadText(text);
+      setSubmitError("");
+      setUploadText(overview.trim());
       setPhase("uploading");
 
-      var charCount = text.replace(/\s/g, "").length;
-      var waveMs = UPLOAD_MS + Math.min(Math.max(0, charCount - 1) * UPLOAD_STAGGER, UPLOAD_STAGGER_MAX);
-
-      if (prefersReducedMotion()) {
-        window.setTimeout(function () { setPhase("done"); }, 200);
-        return;
-      }
-
-      window.setTimeout(function () {
-        setPhase("vanishing");
-        window.setTimeout(function () {
-          setPhase("done");
-        }, UPLOAD_VANISH_MS);
-      }, waveMs);
+      fetch(endpoint, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      })
+        .then(function (response) {
+          return response.json().then(function (result) {
+            if (!response.ok || !result.ok) {
+              throw new Error(
+                result.errors && result.errors[0] ? result.errors[0] : "Could not send the request."
+              );
+            }
+          });
+        })
+        .then(function () {
+          if (prefersReducedMotion()) {
+            window.setTimeout(function () { setPhase("done"); }, 200);
+            return;
+          }
+          var charCount = overview.replace(/\s/g, "").length;
+          var waveMs = UPLOAD_MS + Math.min(Math.max(0, charCount - 1) * UPLOAD_STAGGER, UPLOAD_STAGGER_MAX);
+          window.setTimeout(function () {
+            setPhase("vanishing");
+            window.setTimeout(function () { setPhase("done"); }, UPLOAD_VANISH_MS);
+          }, overview.trim() ? waveMs : 400);
+        })
+        .catch(function (error) {
+          setPhase("idle");
+          setSubmitError(error && error.message ? error.message : "Could not send the request. Please try again.");
+        });
     }
 
     return h(
@@ -629,6 +659,14 @@
               h(
                 "div",
                 { className: "grid grid-cols-1 gap-5 md:grid-cols-2" },
+                h("input", {
+                  type: "text",
+                  name: "website",
+                  tabIndex: -1,
+                  autoComplete: "off",
+                  className: "hidden",
+                  "aria-hidden": "true",
+                }),
                 h(
                   "label",
                   { className: "block text-sm font-medium text-ink" },
@@ -743,7 +781,10 @@
                     "mt-6 w-full rounded-lg bg-terracotta px-5 py-3 text-sm font-medium tracking-wide text-canvas transition duration-300 ease-calm hover:bg-terracotta/90 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-terracotta disabled:cursor-wait disabled:opacity-70 md:w-auto",
                 },
                 isSubmitting ? "Sending…" : "Get Started"
-              )
+              ),
+              submitError
+                ? h("p", { className: "mt-3 text-sm font-light text-terracotta", role: "alert" }, submitError)
+                : null
             )
       )
     );
