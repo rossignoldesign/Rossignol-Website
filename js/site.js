@@ -5,7 +5,27 @@
   const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
   document.querySelectorAll(".hero-video, .mid-banner-video").forEach(function (video) {
-    if (reduced) video.pause();
+    video.muted = true;
+    video.defaultMuted = true;
+    video.setAttribute("playsinline", "");
+    video.setAttribute("webkit-playsinline", "");
+    if (reduced) {
+      video.pause();
+      return;
+    }
+    var tryPlay = function () {
+      var play = video.play();
+      if (play && play.catch) play.catch(function () {});
+    };
+    tryPlay();
+    video.addEventListener("canplay", tryPlay, { once: true });
+    document.addEventListener(
+      "touchstart",
+      function () {
+        tryPlay();
+      },
+      { once: true, passive: true }
+    );
   });
 
   const banner = document.querySelector(".hero-banner");

@@ -308,7 +308,9 @@
 
   function toVimeoEmbedSrc(url) {
     const id = vimeoIdFromUrl(url);
-    return id ? "https://player.vimeo.com/video/" + id + "?autoplay=1" : url;
+    if (!id) return url;
+    var ios = /iP(hone|ad|od)/.test(navigator.userAgent) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+    return "https://player.vimeo.com/video/" + id + (ios ? "?playsinline=1" : "?autoplay=1&playsinline=1");
   }
 
   function toYoutubeEmbedSrc(url) {
@@ -510,9 +512,12 @@
     useEffect(
       function () {
         const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+        const compact = window.matchMedia("(max-width: 767px)").matches;
         const duration = reduced
-          ? 1200
-          : (CONNECT_COPY.length - 1) * CONNECT_STAGGER_MS + CONNECT_WAVE_MS * CONNECT_CYCLES;
+          ? 800
+          : compact
+            ? 1600
+            : (CONNECT_COPY.length - 1) * CONNECT_STAGGER_MS + CONNECT_WAVE_MS * CONNECT_CYCLES;
         const timer = window.setTimeout(function () {
           setConnectOut(true);
         }, duration);
@@ -544,7 +549,7 @@
       {
         className:
           "cs-modal is-open fixed inset-0 z-50 flex items-center justify-center " +
-          (expanded ? "p-2 md:p-4" : "p-4 md:p-10"),
+          (expanded ? "p-1 sm:p-2 md:p-4" : "p-2 sm:p-4 md:p-10"),
       },
       h("button", {
         type: "button",
@@ -563,7 +568,7 @@
             "relative z-10 flex flex-col overflow-hidden rounded-xl border border-canvas/10 bg-teal text-canvas transition-[max-width] duration-300 ease-calm " +
             (expanded
               ? "h-[min(94vh,56rem)] max-h-[94vh] w-full max-w-[min(96vw,80rem)]"
-              : "max-h-[min(92vh,56rem)] w-full max-w-4xl overflow-y-auto overflow-x-hidden"),
+              : "max-h-[min(92dvh,56rem)] w-full max-w-4xl overflow-y-auto overflow-x-hidden"),
         },
         h(
           "div",
@@ -616,7 +621,7 @@
             className: "relative z-0 h-full w-full",
             src: toVimeoEmbedSrc(video.vimeoUrl),
             title: video.title,
-            allow: "autoplay; fullscreen; picture-in-picture",
+            allow: "autoplay; fullscreen; picture-in-picture; encrypted-media",
             allowFullScreen: true,
           }),
           h(
@@ -858,7 +863,7 @@
       { className: "space-y-6" },
       h(
         "div",
-        { className: "mx-auto flex max-w-6xl items-end justify-between gap-6 px-6" },
+        { className: "mx-auto flex max-w-6xl flex-col gap-4 px-6 sm:flex-row sm:items-end sm:justify-between sm:gap-6" },
         h(
           "div",
           { className: "max-w-3xl" },
@@ -871,7 +876,7 @@
         ),
         h(
           "div",
-          { className: "hidden shrink-0 gap-2 md:flex" },
+          { className: "flex shrink-0 gap-2" },
           h(
             "button",
             {
@@ -1028,7 +1033,7 @@
             observer.disconnect();
           }
         },
-        { threshold: 0.45, rootMargin: "0px 0px -8% 0px" }
+        { threshold: [0, 0.08, 0.2], rootMargin: "0px 0px -12% 0px" }
       );
       if (heading) observer.observe(heading);
       else if (intro) observer.observe(intro);
@@ -1060,6 +1065,15 @@
 
       document.addEventListener("click", onActivate, true);
       window.addEventListener("hashchange", onHash);
+      window.addEventListener("scroll", onScrollReveal, { passive: true });
+      onScrollReveal();
+
+      function onScrollReveal() {
+        const el = heading || intro;
+        if (!el) return;
+        const rect = el.getBoundingClientRect();
+        if (rect.top < window.innerHeight * 0.86 && rect.bottom > 0) reveal();
+      }
 
       return function () {
         observer.disconnect();
@@ -1068,6 +1082,7 @@
         });
         document.removeEventListener("click", onActivate, true);
         window.removeEventListener("hashchange", onHash);
+        window.removeEventListener("scroll", onScrollReveal);
       };
     }, []);
 

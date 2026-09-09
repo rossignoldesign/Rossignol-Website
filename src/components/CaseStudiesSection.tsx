@@ -18,7 +18,11 @@ export function vimeoIdFromUrl(url: string): string | null {
 
 function toVimeoEmbedSrc(url: string): string {
   const id = vimeoIdFromUrl(url);
-  return id ? `https://player.vimeo.com/video/${id}?autoplay=1` : url;
+  if (!id) return url;
+  const ios =
+    /iP(hone|ad|od)/.test(navigator.userAgent) ||
+    (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+  return `https://player.vimeo.com/video/${id}${ios ? "?playsinline=1" : "?autoplay=1&playsinline=1"}`;
 }
 
 function toYoutubeEmbedSrc(url: string): string {
@@ -144,9 +148,12 @@ function VideoLightbox({
 
   useEffect(() => {
     const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const compact = window.matchMedia("(max-width: 767px)").matches;
     const duration = reduced
-      ? 1200
-      : (CONNECT_COPY.length - 1) * CONNECT_STAGGER_MS + CONNECT_WAVE_MS * CONNECT_CYCLES;
+      ? 800
+      : compact
+        ? 1600
+        : (CONNECT_COPY.length - 1) * CONNECT_STAGGER_MS + CONNECT_WAVE_MS * CONNECT_CYCLES;
     const timer = window.setTimeout(() => setConnectOut(true), duration);
     return () => window.clearTimeout(timer);
   }, []);
@@ -167,7 +174,7 @@ function VideoLightbox({
 
   return (
     <motion.div
-      className={`fixed inset-0 z-50 flex items-center justify-center ${expanded ? "p-2 md:p-4" : "p-4 md:p-10"}`}
+      className={`fixed inset-0 z-50 flex items-center justify-center ${expanded ? "p-1 sm:p-2 md:p-4" : "p-2 sm:p-4 md:p-10"}`}
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
@@ -187,7 +194,7 @@ function VideoLightbox({
         className={`relative z-10 flex flex-col overflow-hidden rounded-xl border border-canvas/10 bg-teal text-canvas transition-[max-width] duration-300 ease-calm ${
           expanded
             ? "h-[min(94vh,56rem)] max-h-[94vh] w-full max-w-[min(96vw,80rem)]"
-            : "max-h-[min(92vh,56rem)] w-full max-w-4xl overflow-y-auto overflow-x-hidden"
+            : "max-h-[min(92dvh,56rem)] w-full max-w-4xl overflow-y-auto overflow-x-hidden"
         }`}
       >
         <div className="flex shrink-0 items-start justify-between gap-4 border-b border-canvas/10 px-5 py-4">
@@ -225,7 +232,7 @@ function VideoLightbox({
             className="relative z-0 h-full w-full"
             src={toVimeoEmbedSrc(video.vimeoUrl)}
             title={video.title}
-            allow="autoplay; fullscreen; picture-in-picture"
+            allow="autoplay; fullscreen; picture-in-picture; encrypted-media"
             allowFullScreen
           />
           <p
@@ -518,14 +525,14 @@ function CategoryCarousel({
 
   return (
     <div className="space-y-6">
-      <div className="mx-auto flex max-w-6xl items-end justify-between gap-6 px-6">
+      <div className="mx-auto flex max-w-6xl flex-col gap-4 px-6 sm:flex-row sm:items-end sm:justify-between sm:gap-6">
         <div className="max-w-3xl">
           <h3 id={headingId} className="text-2xl font-semibold tracking-tight text-canvas md:text-3xl">
             {carousel.title}
           </h3>
           <p className="mt-2 text-sm font-light leading-relaxed text-canvas/80">{carousel.tagline}</p>
         </div>
-        <div className="hidden shrink-0 gap-2 md:flex">
+        <div className="flex shrink-0 gap-2">
           <button
             type="button"
             className="rounded-lg border border-canvas/20 px-3 py-2 text-sm font-medium text-canvas transition duration-300 ease-calm hover:border-teal hover:text-teal focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-teal"
@@ -678,7 +685,7 @@ export function CaseStudiesSection({
           observer.disconnect();
         }
       },
-      { threshold: 0.45, rootMargin: "0px 0px -8% 0px" }
+      { threshold: [0, 0.08, 0.2], rootMargin: "0px 0px -12% 0px" }
     );
     if (heading) observer.observe(heading);
     else if (intro) observer.observe(intro);
@@ -709,12 +716,22 @@ export function CaseStudiesSection({
 
     document.addEventListener("click", onActivate, true);
     window.addEventListener("hashchange", onHash);
+    window.addEventListener("scroll", onScrollReveal, { passive: true });
+    onScrollReveal();
+
+    function onScrollReveal() {
+      const el = heading || intro;
+      if (!el) return;
+      const rect = el.getBoundingClientRect();
+      if (rect.top < window.innerHeight * 0.86 && rect.bottom > 0) reveal();
+    }
 
     return () => {
       observer.disconnect();
       timers.forEach((id) => window.clearTimeout(id));
       document.removeEventListener("click", onActivate, true);
       window.removeEventListener("hashchange", onHash);
+      window.removeEventListener("scroll", onScrollReveal);
     };
   }, []);
 

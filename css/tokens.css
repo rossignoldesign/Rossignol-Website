@@ -72,11 +72,6 @@ html {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .hero-video,
-  .mid-banner-video {
-    display: none;
-  }
-
   .mid-banner {
     min-height: min(46vw, 28rem);
     background: var(--color-ink) url("../Website%20Content/Elsie%20McGill%20Still.png") center / cover no-repeat;
@@ -115,6 +110,8 @@ body {
   padding-inline: 1.5rem;
   gap: 1.75rem;
   overflow-anchor: none;
+  -webkit-overflow-scrolling: touch;
+  touch-action: pan-x;
 }
 
 .cs-card {
@@ -374,16 +371,40 @@ body {
   position: absolute;
   left: 0;
   top: 12%;
-  width: min(48vw, 22rem);
+  width: min(58vw, 18rem);
   height: auto;
   transform-origin: center center;
   will-change: transform, opacity;
-  animation: cs-elsie-airplane 7.2s linear 0.12s both;
+  backface-visibility: visible;
+  -webkit-backface-visibility: visible;
+  animation: cs-elsie-airplane-mobile 6.4s linear 0.08s both;
 }
 
 @media (min-width: 768px) {
   .cs-elsie-plane img {
     width: min(38vw, 26rem);
+    animation-name: cs-elsie-airplane;
+    animation-duration: 7.2s;
+    animation-delay: 0.12s;
+  }
+}
+
+@keyframes cs-elsie-airplane-mobile {
+  0% {
+    opacity: 1;
+    transform: translate(-110%, 18vh) rotate(-10deg);
+  }
+  38% {
+    opacity: 1;
+    transform: translate(18vw, 4vh) rotate(-4deg);
+  }
+  72% {
+    opacity: 1;
+    transform: translate(52vw, 16vh) rotate(-8deg);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(120vw, 2vh) rotate(-6deg);
   }
 }
 
@@ -790,6 +811,7 @@ body {
     animation: none;
     opacity: 1;
     transform: none;
+    pointer-events: auto;
   }
 }
 
