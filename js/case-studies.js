@@ -851,13 +851,6 @@
       [carousel.id]
     );
 
-    function scrollByCard(direction) {
-      var next = featuredIndex + direction;
-      if (next < 0) next = 0;
-      if (next > looped.length - 1) next = looped.length - 1;
-      centerCard(next, true);
-    }
-
     return h(
       "div",
       { className: "space-y-4" },
@@ -886,36 +879,6 @@
             onPlay: onPlay,
           });
         })
-      ),
-      h(
-        "div",
-        { className: "flex justify-center gap-2 px-6" },
-        h(
-          "button",
-          {
-            type: "button",
-            className:
-              "rounded-lg border border-canvas/20 px-3 py-2 text-sm font-medium text-canvas transition duration-300 ease-calm hover:border-teal hover:text-teal focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-teal",
-            "aria-label": "Previous videos in " + carousel.title,
-            onClick: function () {
-              scrollByCard(-1);
-            },
-          },
-          "←"
-        ),
-        h(
-          "button",
-          {
-            type: "button",
-            className:
-              "rounded-lg border border-canvas/20 px-3 py-2 text-sm font-medium text-canvas transition duration-300 ease-calm hover:border-terracotta hover:text-terracotta focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-terracotta",
-            "aria-label": "Next videos in " + carousel.title,
-            onClick: function () {
-              scrollByCard(1);
-            },
-          },
-          "→"
-        )
       )
     );
   }
