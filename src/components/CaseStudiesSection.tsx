@@ -370,7 +370,7 @@ function CaseStudyCard({
 
   return (
     <article
-      className={`cs-card group flex w-[min(78vw,22rem)] shrink-0 flex-col overflow-hidden rounded-xl border border-canvas/10 bg-ink sm:w-[min(62vw,26rem)]${featured ? " is-featured" : ""}`}
+      className={`cs-card group flex w-[min(68vw,20rem)] shrink-0 flex-col overflow-hidden rounded-xl border border-canvas/10 bg-ink sm:w-[min(62vw,26rem)]${featured ? " is-featured" : ""}`}
     >
       <button
         type="button"
@@ -524,32 +524,12 @@ function CategoryCarousel({
   }
 
   return (
-    <div className="space-y-6">
-      <div className="mx-auto flex max-w-6xl flex-col gap-4 px-6 sm:flex-row sm:items-end sm:justify-between sm:gap-6">
-        <div className="max-w-3xl">
-          <h3 id={headingId} className="text-2xl font-semibold tracking-tight text-canvas md:text-3xl">
-            {carousel.title}
-          </h3>
-          <p className="mt-2 text-sm font-light leading-relaxed text-canvas/80">{carousel.tagline}</p>
-        </div>
-        <div className="flex shrink-0 gap-2">
-          <button
-            type="button"
-            className="rounded-lg border border-canvas/20 px-3 py-2 text-sm font-medium text-canvas transition duration-300 ease-calm hover:border-teal hover:text-teal focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-teal"
-            aria-label={`Previous videos in ${carousel.title}`}
-            onClick={() => scrollByCard(-1)}
-          >
-            ←
-          </button>
-          <button
-            type="button"
-            className="rounded-lg border border-canvas/20 px-3 py-2 text-sm font-medium text-canvas transition duration-300 ease-calm hover:border-terracotta hover:text-terracotta focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-terracotta"
-            aria-label={`Next videos in ${carousel.title}`}
-            onClick={() => scrollByCard(1)}
-          >
-            →
-          </button>
-        </div>
+    <div className="space-y-4">
+      <div className="mx-auto max-w-6xl px-6">
+        <h3 id={headingId} className="text-2xl font-semibold tracking-tight text-canvas md:text-3xl">
+          {carousel.title}
+        </h3>
+        <p className="mt-2 max-w-3xl text-sm font-light leading-relaxed text-canvas/80">{carousel.tagline}</p>
       </div>
       <div
         ref={railRef}
@@ -564,6 +544,24 @@ function CategoryCarousel({
             onPlay={onPlay}
           />
         ))}
+      </div>
+      <div className="flex justify-center gap-2 px-6">
+        <button
+          type="button"
+          className="rounded-lg border border-canvas/20 px-3 py-2 text-sm font-medium text-canvas transition duration-300 ease-calm hover:border-teal hover:text-teal focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-teal"
+          aria-label={`Previous videos in ${carousel.title}`}
+          onClick={() => scrollByCard(-1)}
+        >
+          ←
+        </button>
+        <button
+          type="button"
+          className="rounded-lg border border-canvas/20 px-3 py-2 text-sm font-medium text-canvas transition duration-300 ease-calm hover:border-terracotta hover:text-terracotta focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-terracotta"
+          aria-label={`Next videos in ${carousel.title}`}
+          onClick={() => scrollByCard(1)}
+        >
+          →
+        </button>
       </div>
     </div>
   );

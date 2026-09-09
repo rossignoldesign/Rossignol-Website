@@ -693,7 +693,7 @@
       "article",
       {
         className:
-          "cs-card group flex w-[min(78vw,22rem)] shrink-0 flex-col overflow-hidden rounded-xl border border-canvas/10 bg-ink sm:w-[min(62vw,26rem)]" +
+          "cs-card group flex w-[min(68vw,20rem)] shrink-0 flex-col overflow-hidden rounded-xl border border-canvas/10 bg-ink sm:w-[min(62vw,26rem)]" +
           (featured ? " is-featured" : ""),
       },
       h(
@@ -860,50 +860,16 @@
 
     return h(
       "div",
-      { className: "space-y-6" },
+      { className: "space-y-4" },
       h(
         "div",
-        { className: "mx-auto flex max-w-6xl flex-col gap-4 px-6 sm:flex-row sm:items-end sm:justify-between sm:gap-6" },
+        { className: "mx-auto max-w-6xl px-6" },
         h(
-          "div",
-          { className: "max-w-3xl" },
-          h(
-            "h3",
-            { id: headingId, className: "text-2xl font-semibold tracking-tight text-canvas md:text-3xl" },
-            carousel.title
-          ),
-          h("p", { className: "mt-2 text-sm font-light leading-relaxed text-canvas/80" }, carousel.tagline)
+          "h3",
+          { id: headingId, className: "text-2xl font-semibold tracking-tight text-canvas md:text-3xl" },
+          carousel.title
         ),
-        h(
-          "div",
-          { className: "flex shrink-0 gap-2" },
-          h(
-            "button",
-            {
-              type: "button",
-              className:
-                "rounded-lg border border-canvas/20 px-3 py-2 text-sm font-medium text-canvas transition duration-300 ease-calm hover:border-teal hover:text-teal focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-teal",
-              "aria-label": "Previous videos in " + carousel.title,
-              onClick: function () {
-                scrollByCard(-1);
-              },
-            },
-            "←"
-          ),
-          h(
-            "button",
-            {
-              type: "button",
-              className:
-                "rounded-lg border border-canvas/20 px-3 py-2 text-sm font-medium text-canvas transition duration-300 ease-calm hover:border-terracotta hover:text-terracotta focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-terracotta",
-              "aria-label": "Next videos in " + carousel.title,
-              onClick: function () {
-                scrollByCard(1);
-              },
-            },
-            "→"
-          )
-        )
+        h("p", { className: "mt-2 max-w-3xl text-sm font-light leading-relaxed text-canvas/80" }, carousel.tagline)
       ),
       h(
         "div",
@@ -920,6 +886,36 @@
             onPlay: onPlay,
           });
         })
+      ),
+      h(
+        "div",
+        { className: "flex justify-center gap-2 px-6" },
+        h(
+          "button",
+          {
+            type: "button",
+            className:
+              "rounded-lg border border-canvas/20 px-3 py-2 text-sm font-medium text-canvas transition duration-300 ease-calm hover:border-teal hover:text-teal focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-teal",
+            "aria-label": "Previous videos in " + carousel.title,
+            onClick: function () {
+              scrollByCard(-1);
+            },
+          },
+          "←"
+        ),
+        h(
+          "button",
+          {
+            type: "button",
+            className:
+              "rounded-lg border border-canvas/20 px-3 py-2 text-sm font-medium text-canvas transition duration-300 ease-calm hover:border-terracotta hover:text-terracotta focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-terracotta",
+            "aria-label": "Next videos in " + carousel.title,
+            onClick: function () {
+              scrollByCard(1);
+            },
+          },
+          "→"
+        )
       )
     );
   }

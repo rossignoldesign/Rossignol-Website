@@ -106,7 +106,7 @@ body {
   scrollbar-width: thin;
   scrollbar-color: color-mix(in srgb, var(--color-ink) 22%, transparent) transparent;
   align-items: center;
-  padding-block: 2.5rem;
+  padding-block: 2.5rem 1rem;
   padding-inline: 1.5rem;
   gap: 1.75rem;
   overflow-anchor: none;
@@ -132,6 +132,23 @@ body {
   opacity: 1;
   z-index: 2;
   box-shadow: 0 22px 48px color-mix(in srgb, var(--color-ink) 14%, transparent);
+}
+
+@media (max-width: 767px) {
+  .cs-card {
+    transform: scale(0.92);
+    opacity: 0.55;
+  }
+
+  .cs-card.is-featured {
+    transform: scale(1);
+    box-shadow: 0 14px 32px color-mix(in srgb, var(--color-ink) 16%, transparent);
+  }
+
+  .cs-card:not(.is-featured):hover,
+  .cs-card:not(.is-featured):focus-within {
+    transform: scale(0.96);
+  }
 }
 
 #work .cs-rail {
