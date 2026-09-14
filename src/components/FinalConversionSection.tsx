@@ -527,8 +527,6 @@ export function FinalConversionSection() {
         </h2>
         <p className="mx-auto mt-5 max-w-xl text-base font-light leading-relaxed text-ink/80">
           Tell us about your organization, project, and objectives.
-          <br />
-          We'll provide you with a free KMb mind map to get the ball rolling.
         </p>
       </div>
 
@@ -549,13 +547,6 @@ export function FinalConversionSection() {
               <p className="mt-3 text-2xl font-semibold tracking-tight text-ink">
                 <ThanksShimmer text="Thank you!" /> You'll receive a confirmation email shortly.
               </p>
-              <p className="mx-auto mt-4 max-w-md text-sm font-light leading-relaxed text-ink/80">
-                In the meantime, check out our blog for more resources, and try our free KMb Mind Map.
-              </p>
-              <div className="mt-6 flex items-center justify-center gap-4">
-                <a href="#blog" className="rounded-lg bg-teal px-5 py-2.5 text-sm font-medium tracking-wide text-canvas transition duration-300 ease-calm hover:bg-terracotta">Blog</a>
-                <a href="#kmb-mind-map" className="rounded-lg bg-teal px-5 py-2.5 text-sm font-medium tracking-wide text-canvas transition duration-300 ease-calm hover:bg-terracotta">KMb Mind Map</a>
-              </div>
             </motion.div>
           ) : (
             <motion.form

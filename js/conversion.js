@@ -615,9 +615,7 @@
         h(
           "p",
           { className: "mx-auto mt-5 max-w-xl text-base font-light leading-relaxed text-ink/80" },
-          "Tell us about your organization, project, and objectives.",
-          h("br"),
-          "We'll provide you with a free KMb mind map to get the ball rolling."
+          "Tell us about your organization, project, and objectives."
         )
       ),
       h(
@@ -637,17 +635,6 @@
                 { className: "mt-3 text-2xl font-semibold tracking-tight text-ink" },
                 h(ThanksShimmer, { text: "Thank you!" }),
                 " You'll receive a confirmation email shortly."
-              ),
-              h(
-                "p",
-                { className: "mx-auto mt-4 max-w-md text-sm font-light leading-relaxed text-ink/80" },
-                "In the meantime, check out our blog for more resources, and try our free KMb Mind Map."
-              ),
-              h(
-                "div",
-                { className: "mt-6 flex items-center justify-center gap-4" },
-                h("a", { href: "#blog", className: "rounded-lg bg-teal px-5 py-2.5 text-sm font-medium tracking-wide text-canvas transition duration-300 ease-calm hover:bg-terracotta" }, "Blog"),
-                h("a", { href: "#kmb-mind-map", className: "rounded-lg bg-teal px-5 py-2.5 text-sm font-medium tracking-wide text-canvas transition duration-300 ease-calm hover:bg-terracotta" }, "KMb Mind Map")
               )
             )
           : h(
