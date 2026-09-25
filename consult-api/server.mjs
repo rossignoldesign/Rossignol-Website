@@ -1,5 +1,8 @@
 import cors from "cors";
 import express from "express";
+import fs from "node:fs";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
 
 const PORT = Number(process.env.PORT) || 8787;
 const RESEND_API_KEY = process.env.RESEND_API_KEY || "";
@@ -12,7 +15,9 @@ const ALLOWED_ORIGINS = (process.env.ALLOWED_ORIGINS || "")
   .filter(Boolean);
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const SLOT_RE = /^\d{4}-\d{2}-\d{2}T(09|1[0-7])$/;
 const MAX_OVERVIEW = 8000;
+const BOOKINGS_PATH = process.env.BOOKINGS_PATH || path.join(path.dirname(fileURLToPath(import.meta.url)), "bookings.json");
 
 const app = express();
 app.disable("x-powered-by");
@@ -38,6 +43,10 @@ app.get("/health", (_req, res) => {
   res.json({ ok: true, fromDomain });
 });
 
+app.get("/consult/slots", (_req, res) => {
+  res.json({ ok: true, slots: readSlots() });
+});
+
 app.post("/consult", async (req, res) => {
   try {
     if (typeof req.body?.website === "string" && req.body.website.trim()) {
@@ -53,6 +62,14 @@ app.post("/consult", async (req, res) => {
     }
     if (!RESEND_API_KEY || !MAIL_TO) {
       res.status(503).json({ ok: false, errors: ["Mail is not configured."] });
+      return;
+    }
+    if (payload.scheduleSlot && !SLOT_RE.test(payload.scheduleSlot)) {
+      res.status(400).json({ ok: false, errors: ["Please choose a valid time."] });
+      return;
+    }
+    if (payload.scheduleSlot && readSlots().includes(payload.scheduleSlot)) {
+      res.status(409).json({ ok: false, errors: ["That time is no longer available. Please choose another."] });
       return;
     }
 
@@ -73,6 +90,14 @@ app.post("/consult", async (req, res) => {
       });
     } catch (error) {
       console.error("Visitor confirmation failed:", error);
+    }
+
+    if (payload.scheduleSlot) {
+      const taken = readSlots();
+      if (!taken.includes(payload.scheduleSlot)) {
+        taken.push(payload.scheduleSlot);
+        writeSlots(taken);
+      }
     }
 
     res.json({ ok: true });
@@ -105,8 +130,24 @@ function normalize(body) {
     grantType: read("grantType"),
     timeline: read("timeline"),
     schedule: read("schedule"),
+    scheduleSlot: read("scheduleSlot"),
     overview: read("overview").slice(0, MAX_OVERVIEW),
   };
+}
+
+function readSlots() {
+  try {
+    const raw = fs.readFileSync(BOOKINGS_PATH, "utf8");
+    const parsed = JSON.parse(raw);
+    return Array.isArray(parsed?.slots) ? parsed.slots.filter((slot) => SLOT_RE.test(slot)) : [];
+  } catch {
+    return [];
+  }
+}
+
+function writeSlots(slots) {
+  fs.mkdirSync(path.dirname(BOOKINGS_PATH), { recursive: true });
+  fs.writeFileSync(BOOKINGS_PATH, JSON.stringify({ slots }, null, 2));
 }
 
 function validate(payload) {

@@ -86,6 +86,48 @@
     TIMES.push({ hour: hour, label: hour12 + ":00 " + suffix });
   }
 
+  const BUSY_CYCLE_DAYS = 9;
+  const BUSY_HELD_SLOTS = 3;
+
+  function heldHoursForDay(date) {
+    if (!date) return {};
+    var epochDay = Math.floor(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()) / 86400000);
+    var cycle = ((epochDay % BUSY_CYCLE_DAYS) + BUSY_CYCLE_DAYS) % BUSY_CYCLE_DAYS;
+    var seed = (cycle + 1) * 0x52d5c1;
+    function rnd() {
+      seed |= 0;
+      seed = (seed + 0x6d2b79f5) | 0;
+      var t = Math.imul(seed ^ (seed >>> 15), 1 | seed);
+      t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+      return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+    }
+    var hours = TIMES.map(function (slot) {
+      return slot.hour;
+    });
+    for (var i = hours.length - 1; i > 0; i -= 1) {
+      var j = Math.floor(rnd() * (i + 1));
+      var swap = hours[i];
+      hours[i] = hours[j];
+      hours[j] = swap;
+    }
+    var held = {};
+    for (var k = 0; k < BUSY_HELD_SLOTS; k += 1) held[hours[k]] = true;
+    return held;
+  }
+
+  function slotKey(date, hour) {
+    var month = String(date.getMonth() + 1).padStart(2, "0");
+    var day = String(date.getDate()).padStart(2, "0");
+    var hourKey = String(hour).padStart(2, "0");
+    return date.getFullYear() + "-" + month + "-" + day + "T" + hourKey;
+  }
+
+  function consultSlotsUrl() {
+    var endpoint = window.ROSSIGNOL_CONSULT_ENDPOINT || "";
+    if (!endpoint) return "";
+    return endpoint.replace(/\/consult\/?$/, "/consult/slots");
+  }
+
   const fieldClass =
     "mt-2 w-full rounded-lg border border-ink/10 bg-canvas px-3 py-2.5 font-normal text-ink outline-none transition duration-300 ease-calm focus:border-terracotta focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-terracotta";
 
@@ -133,6 +175,8 @@
     const [pickedDate, setPickedDate] = useState(null);
     const [confirming, setConfirming] = useState("");
     const [value, setValue] = useState("");
+    const [slotValue, setSlotValue] = useState("");
+    const [booked, setBooked] = useState({});
 
     const cells = useMemo(
       function () {
@@ -176,6 +220,32 @@
       [open]
     );
 
+    useEffect(
+      function () {
+        if (!open) return undefined;
+        var url = consultSlotsUrl();
+        if (!url) return undefined;
+        var cancelled = false;
+        fetch(url)
+          .then(function (response) {
+            return response.json();
+          })
+          .then(function (data) {
+            if (cancelled || !data || !Array.isArray(data.slots)) return;
+            var next = {};
+            data.slots.forEach(function (key) {
+              next[key] = true;
+            });
+            setBooked(next);
+          })
+          .catch(function () {});
+        return function () {
+          cancelled = true;
+        };
+      },
+      [open]
+    );
+
     function shiftMonth(delta) {
       const next = new Date(viewYear, viewMonth + delta, 1);
       setViewYear(next.getFullYear());
@@ -193,6 +263,8 @@
     function chooseTime(label, hour) {
       if (!pickedDate || confirming) return;
       if (startOfDay(pickedDate) === todayStart && hour <= today.getHours()) return;
+      if (heldHoursForDay(pickedDate)[hour]) return;
+      if (booked[slotKey(pickedDate, hour)]) return;
 
       const display =
         pickedDate.toLocaleDateString("en-US", {
@@ -205,6 +277,7 @@
 
       if (prefersReducedMotion()) {
         setValue(display);
+        setSlotValue(slotKey(pickedDate, hour));
         setOpen(false);
         setTimesOpen(false);
         return;
@@ -213,6 +286,7 @@
       setConfirming(label);
       window.setTimeout(function () {
         setValue(display);
+        setSlotValue(slotKey(pickedDate, hour));
         setConfirming("");
         setOpen(false);
         setTimesOpen(false);
@@ -224,6 +298,7 @@
       { className: "schedule-picker block text-sm font-medium text-ink", ref: rootRef },
       "Schedule",
       h("input", { type: "hidden", name: "schedule", value: value }),
+      h("input", { type: "hidden", name: "scheduleSlot", value: slotValue }),
       h(
         "button",
         {
@@ -351,6 +426,8 @@
                 "div",
                 { className: "schedule-times-list" },
                 TIMES.map(function (slot) {
+                  const taken = Boolean(pickedDate) && booked[slotKey(pickedDate, slot.hour)];
+                  const held = Boolean(pickedDate) && heldHoursForDay(pickedDate)[slot.hour];
                   const pastHour =
                     Boolean(pickedDate) &&
                     startOfDay(pickedDate) === todayStart &&
@@ -361,7 +438,7 @@
                     {
                       key: slot.label,
                       type: "button",
-                      disabled: pastHour || Boolean(confirming && !isConfirming),
+                      disabled: taken || held || pastHour || Boolean(confirming && !isConfirming),
                       className: "schedule-time",
                       onClick: function () {
                         chooseTime(slot.label, slot.hour);
@@ -540,6 +617,7 @@
         grantType: String(data.get("grantType") || ""),
         timeline: String(data.get("timeline") || ""),
         schedule: String(data.get("schedule") || ""),
+        scheduleSlot: String(data.get("scheduleSlot") || ""),
         overview: overview,
         website: String(data.get("website") || ""),
       };

@@ -82,6 +82,47 @@ const TIMES = Array.from({ length: 9 }, (_, index) => {
   return { hour, label: `${hour12}:00 ${suffix}` };
 });
 
+const BUSY_CYCLE_DAYS = 9;
+const BUSY_HELD_SLOTS = 3;
+
+function heldHoursForDay(date: Date | null) {
+  if (!date) return {} as Record<number, boolean>;
+  const epochDay = Math.floor(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()) / 86400000);
+  const cycle = ((epochDay % BUSY_CYCLE_DAYS) + BUSY_CYCLE_DAYS) % BUSY_CYCLE_DAYS;
+  let seed = (cycle + 1) * 0x52d5c1;
+  function rnd() {
+    seed |= 0;
+    seed = (seed + 0x6d2b79f5) | 0;
+    let t = Math.imul(seed ^ (seed >>> 15), 1 | seed);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  }
+  const hours = TIMES.map((slot) => slot.hour);
+  for (let i = hours.length - 1; i > 0; i -= 1) {
+    const j = Math.floor(rnd() * (i + 1));
+    const swap = hours[i];
+    hours[i] = hours[j];
+    hours[j] = swap;
+  }
+  const held: Record<number, boolean> = {};
+  for (let k = 0; k < BUSY_HELD_SLOTS; k += 1) held[hours[k]] = true;
+  return held;
+}
+
+function slotKey(date: Date, hour: number) {
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  const hourKey = String(hour).padStart(2, "0");
+  return `${date.getFullYear()}-${month}-${day}T${hourKey}`;
+}
+
+function consultSlotsUrl() {
+  const endpoint =
+    typeof window !== "undefined" ? (window as Window & { ROSSIGNOL_CONSULT_ENDPOINT?: string }).ROSSIGNOL_CONSULT_ENDPOINT : "";
+  if (!endpoint) return "";
+  return endpoint.replace(/\/consult\/?$/, "/consult/slots");
+}
+
 const fieldClass =
   "mt-2 w-full rounded-lg border border-ink/10 bg-canvas px-3 py-2.5 font-normal text-ink outline-none transition duration-300 ease-calm focus:border-terracotta focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-terracotta";
 
@@ -130,6 +171,8 @@ function SchedulePicker() {
   const [pickedDate, setPickedDate] = useState<Date | null>(null);
   const [confirming, setConfirming] = useState("");
   const [value, setValue] = useState("");
+  const [slotValue, setSlotValue] = useState("");
+  const [booked, setBooked] = useState<Record<string, boolean>>({});
 
   const cells = useMemo(() => {
     const first = new Date(viewYear, viewMonth, 1).getDay();
@@ -168,6 +211,27 @@ function SchedulePicker() {
     };
   }, [open]);
 
+  useEffect(() => {
+    if (!open) return undefined;
+    const url = consultSlotsUrl();
+    if (!url) return undefined;
+    let cancelled = false;
+    fetch(url)
+      .then((response) => response.json())
+      .then((data) => {
+        if (cancelled || !data || !Array.isArray(data.slots)) return;
+        const next: Record<string, boolean> = {};
+        data.slots.forEach((key: string) => {
+          next[key] = true;
+        });
+        setBooked(next);
+      })
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, [open]);
+
   function shiftMonth(delta: number) {
     const next = new Date(viewYear, viewMonth + delta, 1);
     setViewYear(next.getFullYear());
@@ -185,6 +249,8 @@ function SchedulePicker() {
   function chooseTime(label: string, hour: number) {
     if (!pickedDate || confirming) return;
     if (startOfDay(pickedDate) === todayStart && hour <= today.getHours()) return;
+    if (heldHoursForDay(pickedDate)[hour]) return;
+    if (booked[slotKey(pickedDate, hour)]) return;
 
     const display = `${pickedDate.toLocaleDateString("en-US", {
       month: "long",
@@ -194,6 +260,7 @@ function SchedulePicker() {
 
     if (prefersReducedMotion()) {
       setValue(display);
+      setSlotValue(slotKey(pickedDate, hour));
       setOpen(false);
       setTimesOpen(false);
       return;
@@ -202,6 +269,7 @@ function SchedulePicker() {
     setConfirming(label);
     window.setTimeout(() => {
       setValue(display);
+      setSlotValue(slotKey(pickedDate, hour));
       setConfirming("");
       setOpen(false);
       setTimesOpen(false);
@@ -212,6 +280,7 @@ function SchedulePicker() {
     <div className="schedule-picker block text-sm font-medium text-ink" ref={rootRef}>
       Schedule
       <input type="hidden" name="schedule" value={value} />
+      <input type="hidden" name="scheduleSlot" value={slotValue} />
       <button
         type="button"
         className={`${fieldClass} schedule-trigger`}
@@ -309,6 +378,8 @@ function SchedulePicker() {
             </div>
             <div className="schedule-times-list">
               {TIMES.map((slot) => {
+                const taken = Boolean(pickedDate) && booked[slotKey(pickedDate as Date, slot.hour)];
+                const held = Boolean(pickedDate) && heldHoursForDay(pickedDate)[slot.hour];
                 const pastHour =
                   Boolean(pickedDate) && startOfDay(pickedDate as Date) === todayStart && slot.hour <= today.getHours();
                 const isConfirming = confirming === slot.label;
@@ -316,7 +387,7 @@ function SchedulePicker() {
                   <button
                     key={slot.label}
                     type="button"
-                    disabled={pastHour || Boolean(confirming && !isConfirming)}
+                    disabled={taken || held || pastHour || Boolean(confirming && !isConfirming)}
                     className="schedule-time"
                     onClick={() => chooseTime(slot.label, slot.hour)}
                   >
@@ -463,6 +534,7 @@ export function FinalConversionSection() {
       grantType: String(data.get("grantType") || ""),
       timeline: String(data.get("timeline") || ""),
       schedule: String(data.get("schedule") || ""),
+      scheduleSlot: String(data.get("scheduleSlot") || ""),
       overview,
       website: String(data.get("website") || ""),
     };
