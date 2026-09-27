@@ -18,6 +18,21 @@ const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const SLOT_RE = /^\d{4}-\d{2}-\d{2}T(09|1[0-7])$/;
 const MAX_OVERVIEW = 8000;
 const BOOKINGS_PATH = process.env.BOOKINGS_PATH || path.join(path.dirname(fileURLToPath(import.meta.url)), "bookings.json");
+const INQUIRIES_PATH = process.env.INQUIRIES_PATH || path.join(path.dirname(fileURLToPath(import.meta.url)), "inquiries.json");
+const INQUIRY_EXPORT_KEY = process.env.INQUIRY_EXPORT_KEY || "";
+const MAX_PROBLEM = 2000;
+const PARTNER_ROWS = [
+  "Institution",
+  "Researcher",
+  "Non Profit",
+  "Innovator",
+  "Social Enterprise",
+  "Gov Agency",
+  "Creative Agency",
+  "Other",
+];
+const STANCES = ["priority", "challenge", "both", "no", ""];
+const INQUIRY_STATUSES = ["completed", "interview-opt-in", "declined_q2", "declined_q3", "left"];
 
 const app = express();
 app.disable("x-powered-by");
@@ -105,6 +120,49 @@ app.post("/consult", async (req, res) => {
     console.error(error);
     res.status(500).json({ ok: false, errors: [publicMailError(error)] });
   }
+});
+
+app.post("/kmb-inquiry", async (req, res) => {
+  try {
+    if (typeof req.body?.website === "string" && req.body.website.trim()) {
+      res.json({ ok: true });
+      return;
+    }
+    const record = normalizeInquiry(req.body);
+    const errors = validateInquiry(record);
+    if (errors.length) {
+      res.status(400).json({ ok: false, errors });
+      return;
+    }
+    appendInquiry(record);
+    if (RESEND_API_KEY && MAIL_TO) {
+      try {
+        await sendMail({
+          to: MAIL_TO,
+          subject: `KMb inquiry ${record.id} — ${record.partnerType}`,
+          html: inquiryHtml(record),
+          text: inquiryText(record),
+        });
+      } catch (error) {
+        console.error("Inquiry mail failed:", error);
+      }
+    }
+    res.json({ ok: true, id: record.id });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ ok: false, errors: ["Could not save the inquiry."] });
+  }
+});
+
+app.get("/kmb-inquiry.csv", (req, res) => {
+  if (INQUIRY_EXPORT_KEY && req.query.key !== INQUIRY_EXPORT_KEY) {
+    res.status(401).json({ ok: false, errors: ["Export key required."] });
+    return;
+  }
+  const rows = readInquiries();
+  res.setHeader("Content-Type", "text/csv; charset=utf-8");
+  res.setHeader("Content-Disposition", "attachment; filename=\"kmb-inquiries.csv\"");
+  res.send(inquiriesToCsv(rows));
 });
 
 app.listen(PORT, () => {
@@ -239,6 +297,126 @@ async function sendMail({ to, subject, html, text, replyTo }) {
     const detail = await response.text();
     throw new Error(`Resend ${response.status}: ${detail}`);
   }
+}
+
+function parseOpenedAt(value) {
+  if (!/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}/.test(value)) return "";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "";
+  const age = Date.now() - date.getTime();
+  if (age < -60_000 || age > 1000 * 60 * 60 * 24 * 30) return "";
+  return date.toISOString();
+}
+
+function normalizeInquiry(body) {
+  const read = (key) => (typeof body?.[key] === "string" ? body[key].trim() : "");
+  const id = read("id").replace(/[^A-Z0-9-]/gi, "").slice(0, 16) || "RD-XXXX";
+  const stance = read("kmbStance");
+  const status = read("status");
+  const receivedAt = new Date().toISOString();
+  return {
+    id,
+    openedAt: parseOpenedAt(read("openedAt")) || receivedAt,
+    createdAt: receivedAt,
+    source: read("source") || "hero",
+    clickedType: read("clickedType"),
+    partnerType: read("partnerType"),
+    clickedMismatch: Boolean(body?.clickedMismatch),
+    kmbStance: STANCES.includes(stance) ? stance : "",
+    willingToTell: read("willingToTell") === "yes" ? "yes" : read("willingToTell") === "no" ? "no" : "",
+    problemText: read("problemText").slice(0, MAX_PROBLEM),
+    email: EMAIL_RE.test(read("email")) ? read("email").slice(0, 120) : "",
+    status: INQUIRY_STATUSES.includes(status) ? status : "left",
+  };
+}
+
+function validateInquiry(record) {
+  const errors = [];
+  if (!PARTNER_ROWS.includes(record.partnerType)) errors.push("Unknown partner type.");
+  if (record.clickedType && !PARTNER_ROWS.includes(record.clickedType)) errors.push("Unknown clicked type.");
+  return errors;
+}
+
+function readInquiries() {
+  try {
+    const parsed = JSON.parse(fs.readFileSync(INQUIRIES_PATH, "utf8"));
+    return Array.isArray(parsed?.inquiries) ? parsed.inquiries : [];
+  } catch {
+    return [];
+  }
+}
+
+function appendInquiry(record) {
+  const inquiries = readInquiries();
+  const index = inquiries.findIndex((row) => row.id === record.id);
+  if (index >= 0) {
+    inquiries[index] = { ...inquiries[index], ...record, createdAt: inquiries[index].createdAt };
+  } else inquiries.push(record);
+  fs.mkdirSync(path.dirname(INQUIRIES_PATH), { recursive: true });
+  fs.writeFileSync(INQUIRIES_PATH, JSON.stringify({ inquiries }, null, 2));
+}
+
+function csvCell(value) {
+  return `"${String(value ?? "").replace(/"/g, '""')}"`;
+}
+
+function inquiriesToCsv(rows) {
+  const header = [
+    "id",
+    "openedAt",
+    "createdAt",
+    "source",
+    "clickedType",
+    "partnerType",
+    "clickedMismatch",
+    "kmbStance",
+    "willingToTell",
+    "problemText",
+    "email",
+    "status",
+  ];
+  const lines = [header.join(",")];
+  rows.forEach((row) => {
+    lines.push(header.map((key) => csvCell(row[key])).join(","));
+  });
+  return lines.join("\n");
+}
+
+function inquiryHtml(record) {
+  return `<div style="font-family:Lexend,Helvetica,Arial,sans-serif;background:#F4F4E8;color:#0D1B31;padding:24px;">
+  <h1 style="font-size:20px;margin:0 0 16px;">KMb inquiry ${escapeHtml(record.id)}</h1>
+  <p style="margin:0 0 16px;font-size:13px;color:#32615F;">Paste into Sheets as one row, or download /kmb-inquiry.csv</p>
+  <table style="font-size:15px;line-height:1.5;">
+    ${row("ID", record.id)}
+    ${row("Opened", record.openedAt)}
+    ${row("Received", record.createdAt)}
+    ${row("Status", record.status)}
+    ${row("Clicked", record.clickedType)}
+    ${row("Path", record.partnerType)}
+    ${row("Mismatch", record.clickedMismatch ? "yes" : "no")}
+    ${row("KMb stance", record.kmbStance || "—")}
+    ${row("Willing to tell", record.willingToTell || "—")}
+    ${row("Problem", record.problemText || "—")}
+    ${row("Interview email", record.email || "—")}
+  </table>
+  <p style="margin:16px 0 0;font-family:ui-monospace,monospace;font-size:12px;color:#0D1B31;">${escapeHtml(inquiriesToCsv([record]))}</p>
+</div>`;
+}
+
+function inquiryText(record) {
+  return [
+    `KMb inquiry ${record.id}`,
+    `Status: ${record.status}`,
+    `Clicked: ${record.clickedType}`,
+    `Path: ${record.partnerType}`,
+    `Mismatch: ${record.clickedMismatch ? "yes" : "no"}`,
+    `KMb stance: ${record.kmbStance || "—"}`,
+    `Willing to tell: ${record.willingToTell || "—"}`,
+    `Problem: ${record.problemText || "—"}`,
+    `Interview email: ${record.email || "—"}`,
+    "",
+    inquiriesToCsv([record]),
+  ].join("\n");
 }
 
 function publicMailError(error) {

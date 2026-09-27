@@ -544,9 +544,29 @@
     var _r = useState(false);
     var reduced = _r[0];
     var setReduced = _r[1];
+    var _em = useState("");
+    var emailValue = _em[0];
+    var setEmailValue = _em[1];
+    var _ec = useState("");
+    var emailCarry = _ec[0];
+    var setEmailCarry = _ec[1];
+    var _ep = useState("idle");
+    var emailCarryPhase = _ep[0];
+    var setEmailCarryPhase = _ep[1];
+    var _og = useState("");
+    var orgValue = _og[0];
+    var setOrgValue = _og[1];
+    var _oc = useState("");
+    var orgCarry = _oc[0];
+    var setOrgCarry = _oc[1];
+    var _op = useState("idle");
+    var orgCarryPhase = _op[0];
+    var setOrgCarryPhase = _op[1];
 
     var isSubmitting = phase === "uploading" || phase === "vanishing";
     var isSuccess = phase === "done";
+    var isCarrying = emailCarryPhase === "writing" || emailCarryPhase === "vanishing";
+    var isCarryingOrg = orgCarryPhase === "writing" || orgCarryPhase === "vanishing";
 
     useEffect(function () {
       const prefersReduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -585,6 +605,82 @@
       return function () {
         observer.disconnect();
         window.removeEventListener("hashchange", onHash);
+      };
+    }, []);
+
+    useEffect(function () {
+      var timers = [];
+
+      function clearCarryTimers() {
+        timers.forEach(function (id) {
+          window.clearTimeout(id);
+        });
+        timers = [];
+      }
+
+      function playField(value, setValue, setCarry, setPhase, delay) {
+        var text = String(value || "").trim();
+        if (!text) return;
+        setValue(text);
+        if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+        var letters = text.replace(/\s/g, "").length;
+        var total = Math.min(letters * THANKS_STAGGER, 520) + 720;
+        timers.push(
+          window.setTimeout(function () {
+            setCarry(text);
+            setPhase("writing");
+          }, delay)
+        );
+        timers.push(
+          window.setTimeout(function () {
+            setPhase("vanishing");
+          }, delay + total)
+        );
+        timers.push(
+          window.setTimeout(function () {
+            setPhase("idle");
+            setCarry("");
+          }, delay + total + 280)
+        );
+      }
+
+      function applyCarry(detail) {
+        var email = String((detail && detail.email) || "").trim();
+        var organization = String((detail && detail.organization) || "").trim();
+        if (PARTNER_TYPES.indexOf(organization) === -1) organization = "";
+        if (!email && !organization) return;
+        clearCarryTimers();
+        playField(email, setEmailValue, setEmailCarry, setEmailCarryPhase, 0);
+        playField(organization, setOrgValue, setOrgCarry, setOrgCarryPhase, email ? 220 : 0);
+      }
+
+      function onCarry(event) {
+        applyCarry(event.detail || {});
+      }
+
+      function readStored() {
+        try {
+          var packed = sessionStorage.getItem("rossignolConsultCarry");
+          if (packed) {
+            sessionStorage.removeItem("rossignolConsultCarry");
+            return JSON.parse(packed);
+          }
+          var legacy = sessionStorage.getItem("rossignolConsultEmail");
+          if (legacy) {
+            sessionStorage.removeItem("rossignolConsultEmail");
+            return { email: legacy, organization: "" };
+          }
+        } catch (err) {}
+        return null;
+      }
+
+      window.addEventListener("rossignol:carry-consult", onCarry);
+      var stored = readStored();
+      if (stored) applyCarry(stored);
+
+      return function () {
+        window.removeEventListener("rossignol:carry-consult", onCarry);
+        clearCarryTimers();
       };
     }, []);
 
@@ -748,25 +844,69 @@
                   "label",
                   { className: "block text-sm font-medium text-ink" },
                   "Email Address",
-                  h("input", {
-                    className: fieldClass,
-                    type: "email",
-                    name: "email",
-                    autoComplete: "email",
-                    required: true,
-                  })
+                  h(
+                    "div",
+                    { className: "consult-email-wrap mt-2" },
+                    h("input", {
+                      className: fieldClass.replace("mt-2 ", "") + (isCarrying ? " is-carry-hidden" : ""),
+                      type: "email",
+                      name: "email",
+                      autoComplete: "email",
+                      required: true,
+                      value: emailValue,
+                      onChange: function (event) {
+                        setEmailValue(event.target.value);
+                      },
+                    }),
+                    isCarrying
+                      ? h(
+                          "div",
+                          {
+                            className:
+                              "consult-email-overlay" +
+                              (emailCarryPhase === "vanishing" ? " is-vanishing" : ""),
+                            "aria-hidden": "true",
+                          },
+                          h(ThanksShimmer, { text: emailCarry })
+                        )
+                      : null
+                  )
                 ),
                 h(
                   "label",
                   { className: "block text-sm font-medium text-ink" },
                   "What best describes you?",
                   h(
-                    "select",
-                    { className: fieldClass, name: "organization", defaultValue: "", required: true },
-                    h("option", { value: "", disabled: true }, "Select an option"),
-                    PARTNER_TYPES.map(function (option) {
-                      return h("option", { key: option, value: option }, option);
-                    })
+                    "div",
+                    { className: "consult-email-wrap mt-2" },
+                    h(
+                      "select",
+                      {
+                        className: fieldClass.replace("mt-2 ", "") + (isCarryingOrg ? " is-carry-hidden" : ""),
+                        name: "organization",
+                        required: true,
+                        value: orgValue,
+                        onChange: function (event) {
+                          setOrgValue(event.target.value);
+                        },
+                      },
+                      h("option", { value: "", disabled: true }, "Select an option"),
+                      PARTNER_TYPES.map(function (option) {
+                        return h("option", { key: option, value: option }, option);
+                      })
+                    ),
+                    isCarryingOrg
+                      ? h(
+                          "div",
+                          {
+                            className:
+                              "consult-email-overlay" +
+                              (orgCarryPhase === "vanishing" ? " is-vanishing" : ""),
+                            "aria-hidden": "true",
+                          },
+                          h(ThanksShimmer, { text: orgCarry })
+                        )
+                      : null
                   )
                 ),
                 h(

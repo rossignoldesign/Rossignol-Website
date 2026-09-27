@@ -9,11 +9,18 @@
     video.defaultMuted = true;
     video.setAttribute("playsinline", "");
     video.setAttribute("webkit-playsinline", "");
+    if (video.classList.contains("mid-banner-video")) {
+      video.playbackRate = 0.75;
+      video.defaultPlaybackRate = 0.75;
+    }
     if (reduced) {
       video.pause();
       return;
     }
     var tryPlay = function () {
+      if (video.classList.contains("mid-banner-video")) {
+        video.playbackRate = 0.75;
+      }
       var play = video.play();
       if (play && play.catch) play.catch(function () {});
     };

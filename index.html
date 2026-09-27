@@ -25,6 +25,7 @@
               ink: "#0D1B31",
               teal: "#32615F",
               terracotta: "#983C1D",
+              "elsie-paper": "#E7EBE8",
             },
             fontFamily: {
               sans: ['"Lexend Deca"', "Lexend", "system-ui", "sans-serif"],
@@ -36,7 +37,7 @@
         },
       };
     </script>
-    <link rel="stylesheet" href="css/tokens.css?v=no-arrows" />
+    <link rel="stylesheet" href="css/tokens.css?v=carry-org" />
   </head>
   <body class="bg-canvas text-ink antialiased">
     <a
@@ -94,14 +95,36 @@
             <span class="hero-follow-item mt-2 block">Partnering with:</span>
           </p>
           </div>
-          <ul class="hero-follow-item mt-4 flex flex-wrap items-center gap-[0.3rem]" aria-label="Partner types">
-            <li class="rounded-[0.45rem] border border-canvas/25 px-[0.45rem] py-[0.15rem] text-[0.72rem] font-medium uppercase tracking-wide text-canvas">Institutions</li>
-            <li class="rounded-[0.45rem] border border-canvas/25 px-[0.45rem] py-[0.15rem] text-[0.72rem] font-medium uppercase tracking-wide text-canvas">Researchers</li>
-            <li class="rounded-[0.45rem] border border-canvas/25 px-[0.45rem] py-[0.15rem] text-[0.72rem] font-medium uppercase tracking-wide text-canvas">Non Profits</li>
-            <li class="rounded-[0.45rem] border border-canvas/25 px-[0.45rem] py-[0.15rem] text-[0.72rem] font-medium uppercase tracking-wide text-canvas">Innovators</li>
-            <li class="rounded-[0.45rem] border border-canvas/25 px-[0.45rem] py-[0.15rem] text-[0.72rem] font-medium uppercase tracking-wide text-canvas">Social Enterprises</li>
-            <li class="rounded-[0.45rem] border border-canvas/25 px-[0.45rem] py-[0.15rem] text-[0.72rem] font-medium uppercase tracking-wide text-canvas">Gov Agencies</li>
-            <li class="rounded-[0.45rem] border border-canvas/25 px-[0.45rem] py-[0.15rem] text-[0.72rem] font-medium uppercase tracking-wide text-canvas">Creative Agencies</li>
+          <ul id="partner-types" class="hero-follow-item partner-types mt-4 flex flex-wrap items-center gap-[0.3rem]" aria-label="Partner types">
+            <li>
+              <button type="button" class="partner-chip" data-partner="institution">Institutions</button>
+            </li>
+            <li>
+              <button type="button" class="partner-chip" data-partner="researcher">Researchers</button>
+            </li>
+            <li>
+              <button type="button" class="partner-chip" data-partner="nonprofit">Non Profits</button>
+            </li>
+            <li>
+              <button type="button" class="partner-chip" data-partner="innovator">Innovators</button>
+            </li>
+            <li>
+              <button type="button" class="partner-chip" data-partner="social-enterprise">Social Enterprises</button>
+            </li>
+            <li>
+              <button type="button" class="partner-chip" data-partner="gov-agency">Gov Agencies</button>
+            </li>
+            <li>
+              <button type="button" class="partner-chip" data-partner="creative-agency">Creative Agencies</button>
+            </li>
+            <li class="kmb-inquiry-break" aria-hidden="true"></li>
+            <li class="kmb-inquiry-item">
+              <div id="kmb-inquiry" class="kmb-inquiry"></div>
+            </li>
+            <li class="kmb-inquiry-spark-holder" aria-hidden="true">
+              <div class="kmb-inquiry-stem" hidden></div>
+              <div class="kmb-inquiry-spark"></div>
+            </li>
           </ul>
           <div class="hero-follow-item mt-10 flex flex-wrap items-center gap-4">
             <a
@@ -204,7 +227,7 @@
         </div>
       </section>
 
-      <section id="studio" class="bg-canvas py-12 md:py-14" aria-label="Partners">
+      <section id="studio" class="bg-elsie-paper py-12 md:py-14" aria-label="Partners">
         <div class="logo-marquee md:hidden" aria-hidden="false">
           <div class="logo-marquee-viewport">
             <div class="logo-marquee-track">
@@ -218,11 +241,8 @@
                 <li class="logo-tile">
                   <img src="public/logos/Tourism_Australia_logo copy.svg.png" alt="Tourism Australia" />
                 </li>
-                <li class="logo-tile logo-tile--crest">
-                  <img src="public/logos/University of Toronto logo.png" alt="University of Toronto" />
-                </li>
-                <li class="logo-tile logo-tile--wide">
-                  <img src="public/logos/Univ_of_victoria_logo.png" alt="University of Victoria" />
+                <li class="logo-tile logo-tile--cortex">
+                  <img src="public/logos/cortex-lab.png" alt="CORTEX Lab" />
                 </li>
                 <li class="logo-tile logo-tile--wide">
                   <img src="public/logos/tourisme montreal logo.png" alt="Tourisme Montréal" />
@@ -238,11 +258,8 @@
                 <li class="logo-tile">
                   <img src="public/logos/Tourism_Australia_logo copy.svg.png" alt="" />
                 </li>
-                <li class="logo-tile logo-tile--crest">
-                  <img src="public/logos/University of Toronto logo.png" alt="" />
-                </li>
-                <li class="logo-tile logo-tile--wide">
-                  <img src="public/logos/Univ_of_victoria_logo.png" alt="" />
+                <li class="logo-tile logo-tile--cortex">
+                  <img src="public/logos/cortex-lab.png" alt="" />
                 </li>
                 <li class="logo-tile logo-tile--wide">
                   <img src="public/logos/tourisme montreal logo.png" alt="" />
@@ -309,11 +326,8 @@
                 <li class="logo-tile">
                   <img src="public/logos/Tourism_Australia_logo copy.svg.png" alt="Tourism Australia" />
                 </li>
-                <li class="logo-tile logo-tile--crest">
-                  <img src="public/logos/University of Toronto logo.png" alt="University of Toronto" />
-                </li>
-                <li class="logo-tile logo-tile--wide">
-                  <img src="public/logos/Univ_of_victoria_logo.png" alt="University of Victoria" />
+                <li class="logo-tile logo-tile--cortex">
+                  <img src="public/logos/cortex-lab.png" alt="CORTEX Lab" />
                 </li>
                 <li class="logo-tile logo-tile--wide">
                   <img src="public/logos/tourisme montreal logo.png" alt="Tourisme Montréal" />
@@ -347,11 +361,8 @@
                 <li class="logo-tile">
                   <img src="public/logos/Tourism_Australia_logo copy.svg.png" alt="" />
                 </li>
-                <li class="logo-tile logo-tile--crest">
-                  <img src="public/logos/University of Toronto logo.png" alt="" />
-                </li>
-                <li class="logo-tile logo-tile--wide">
-                  <img src="public/logos/Univ_of_victoria_logo.png" alt="" />
+                <li class="logo-tile logo-tile--cortex">
+                  <img src="public/logos/cortex-lab.png" alt="" />
                 </li>
                 <li class="logo-tile logo-tile--wide">
                   <img src="public/logos/tourisme montreal logo.png" alt="" />
@@ -465,7 +476,7 @@
       </div>
     </footer>
 
-    <script src="js/site.js?v=mobile-media"></script>
+    <script src="js/site.js?v=elsie-75"></script>
     <script crossorigin src="https://unpkg.com/react@18.3.1/umd/react.production.min.js"></script>
     <script crossorigin src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.production.min.js"></script>
     <script src="js/kmb-pillars.js?v=tech-excellence-copy"></script>
@@ -473,6 +484,7 @@
     <script>
       window.ROSSIGNOL_CONSULT_ENDPOINT = "https://rossignol-website-production.up.railway.app/consult";
     </script>
-    <script src="js/conversion.js?v=booked-slots"></script>
+    <script src="js/kmb-inquiry.js?v=pencil-down"></script>
+    <script src="js/conversion.js?v=carry-org"></script>
   </body>
 </html>
